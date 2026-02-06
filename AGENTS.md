@@ -1,3 +1,26 @@
 # AGENTS.md
 
-for every project, write a detailed EXPLANATION.md file that explains the whole project in plain language.
+## 目的
+このリポジトリでのAI作業ルールと制約を定義する。
+
+## 必須ドキュメント
+- 変更を加えたら `EXPLANATION.md` を更新し、プロジェクト全体を平易な日本語で説明する。
+
+## 作業範囲
+- 変更して良い: `index.html`, `styles.css`, `EXPLANATION.md`, `AGENTS.md`
+- 変更しない: ビルド成果物、`node_modules/`、生成物
+
+## コーディング規約
+- 既存の命名とスタイルに合わせる。
+- 明瞭さを優先し、最小限で目的に沿った変更を行う。
+
+## テスト / ビルド
+- 利用可能で変更に関係する場合のみ、テストやビルドを実行する。
+
+## コミット方針
+- コミットメッセージは英語にする。
+- コミットは小さく、目的を一つに絞る。
+
+## 注意事項
+- 機密情報やAPIキーは追加しない。
+- 外部ネットワークアクセスが必要な場合は事前に相談する。
