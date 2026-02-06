@@ -1,0 +1,871 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>Math Lane Shooter (MVP)</title>
+  <style>
+    html, body { height: 100%; margin: 0; background:#0b0f19; }
+    #game { width: 100vw; height: 100vh; touch-action: none; }
+  </style>
+</head>
+<body>
+  <div id="game"></div>
+
+  <!-- Phaser 3 (CDN) -->
+  <script src="https://cdn.jsdelivr.net/npm/phaser@3.80.1/dist/phaser.min.js"></script>
+  <script>
+    // ===== Utilities =====
+    const randInt = (min, max) => Math.floor(Math.random() * (max - min + 1)) + min;
+
+    function shuffle(arr) {
+      for (let i = arr.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [arr[i], arr[j]] = [arr[j], arr[i]];
+      }
+      return arr;
+    }
+
+    function makeQuestion() {
+      const a = randInt(0, 20);
+      const b = randInt(0, a);
+      const correct = a - b;
+
+      const set = new Set([correct]);
+      const deltas = shuffle([-2, -1, +1, +2, -3, +3]);
+
+      for (const d of deltas) {
+        if (set.size >= 4) break;
+        const v = correct + d;
+        if (v >= 0 && v <= 20) set.add(v);
+      }
+
+      while (set.size < 4) {
+        set.add(randInt(0, 20));
+      }
+
+      const choices = shuffle([...set]);
+      return { text: `${a} - ${b}`, correct, choices };
+    }
+
+    function hearts(n) {
+      return "❤️".repeat(Math.max(0, n));
+    }
+
+    // ===== SFX (Web Audio synth: punchy shooter) =====
+    // iOS requires user gesture before audio can play; we call SFX.resume() on START tap.
+    // Picked set: shoot:1 correct:4 wrong:1 miss:2 ui:1
+    const AudioLab = (() => {
+      let ctx = null;
+      let master = null;
+      let comp = null;
+      let drive = null;
+
+      function makeDriveCurve(amount) {
+        const k = typeof amount === "number" ? amount : 20;
+        const n = 44100;
+        const curve = new Float32Array(n);
+        const deg = Math.PI / 180;
+        for (let i = 0; i < n; i++) {
+          const x = (i * 2) / n - 1;
+          curve[i] = ((3 + k) * x * 20 * deg) / (Math.PI + k * Math.abs(x));
+        }
+        return curve;
+      }
+
+      function ensure() {
+        if (ctx) return;
+        const AC = window.AudioContext || window.webkitAudioContext;
+        ctx = new AC();
+
+        master = ctx.createGain();
+        master.gain.value = 0.55; // louder / punchier
+
+        comp = ctx.createDynamicsCompressor();
+        comp.threshold.value = -18;
+        comp.knee.value = 24;
+        comp.ratio.value = 6;
+        comp.attack.value = 0.004;
+        comp.release.value = 0.12;
+
+        drive = ctx.createWaveShaper();
+        drive.curve = makeDriveCurve(18);
+        drive.oversample = "4x";
+
+        master.connect(comp);
+        comp.connect(drive);
+        drive.connect(ctx.destination);
+      }
+
+      async function resume() {
+        ensure();
+        if (ctx.state === "suspended") {
+          try { await ctx.resume(); } catch (_) {}
+        }
+      }
+
+      function now() { return ctx?.currentTime ?? 0; }
+
+      function env(g, t0, a, d, s, r, peak = 0.9) {
+        g.gain.cancelScheduledValues(t0);
+        g.gain.setValueAtTime(0.0001, t0);
+        g.gain.exponentialRampToValueAtTime(Math.max(0.0002, peak), t0 + Math.max(0.001, a));
+        g.gain.exponentialRampToValueAtTime(Math.max(0.0002, peak * s), t0 + a + Math.max(0.001, d));
+        g.gain.exponentialRampToValueAtTime(0.0001, t0 + a + d + Math.max(0.001, r));
+      }
+
+      function osc({ type = "sawtooth", f = 440, fTo = null, dur = 0.12, gain = 0.5, detune = 0 } = {}) {
+        if (!ctx || ctx.state !== "running") return;
+        const t0 = now();
+        const o = ctx.createOscillator();
+        const g = ctx.createGain();
+
+        o.type = type;
+        o.detune.value = detune;
+        o.frequency.setValueAtTime(f, t0);
+        if (fTo != null) {
+          o.frequency.exponentialRampToValueAtTime(Math.max(1, fTo), t0 + dur);
+        }
+
+        env(g, t0, 0.004, 0.03, 0.25, dur, gain);
+
+        o.connect(g);
+        g.connect(master);
+        o.start(t0);
+        o.stop(t0 + dur + 0.08);
+      }
+
+      function noise({ dur = 0.08, gain = 0.25, hp = 1200, lp = 8000 } = {}) {
+        if (!ctx || ctx.state !== "running") return;
+        const t0 = now();
+        const n = Math.floor(ctx.sampleRate * dur);
+        const buf = ctx.createBuffer(1, n, ctx.sampleRate);
+        const d = buf.getChannelData(0);
+        for (let i = 0; i < n; i++) d[i] = (Math.random() * 2 - 1);
+
+        const src = ctx.createBufferSource();
+        src.buffer = buf;
+
+        const g = ctx.createGain();
+        const hpF = ctx.createBiquadFilter();
+        const lpF = ctx.createBiquadFilter();
+        hpF.type = "highpass";
+        lpF.type = "lowpass";
+        hpF.frequency.setValueAtTime(hp, t0);
+        lpF.frequency.setValueAtTime(lp, t0);
+
+        env(g, t0, 0.002, 0.02, 0.2, dur, gain);
+
+        src.connect(hpF);
+        hpF.connect(lpF);
+        lpF.connect(g);
+        g.connect(master);
+
+        src.start(t0);
+        src.stop(t0 + dur + 0.05);
+      }
+
+      function click({ f = 900, dur = 0.03, gain = 0.35 } = {}) {
+        osc({ type: "square", f, fTo: f * 0.95, dur, gain });
+      }
+
+      return { ensure, resume, osc, noise, click };
+    })();
+
+    const SFX = (() => {
+      const picks = { shoot: 1, correct: 4, wrong: 1, miss: 2, ui: 1 };
+
+      function playShoot1() {
+        // plasma zap
+        AudioLab.osc({ type: "sawtooth", f: 1800, fTo: 420, dur: 0.09, gain: 0.55, detune: -3 });
+        AudioLab.osc({ type: "square", f: 900, fTo: 240, dur: 0.07, gain: 0.25, detune: 7 });
+        AudioLab.noise({ dur: 0.05, gain: 0.18, hp: 2200, lp: 9000 });
+      }
+
+      function playCorrect4() {
+        // happy blip (two notes)
+        AudioLab.click({ f: 1040, dur: 0.04, gain: 0.35 });
+        setTimeout(() => AudioLab.click({ f: 1560, dur: 0.05, gain: 0.40 }), 55);
+      }
+
+      function playWrong1() {
+        // classic buzzer
+        AudioLab.osc({ type: "sawtooth", f: 260, fTo: 110, dur: 0.18, gain: 0.50 });
+      }
+
+      function playMiss2() {
+        // boom + click
+        AudioLab.osc({ type: "sawtooth", f: 160, fTo: 70, dur: 0.26, gain: 0.55 });
+        setTimeout(() => AudioLab.click({ f: 420, dur: 0.03, gain: 0.22 }), 40);
+      }
+
+      function playUi1() {
+        AudioLab.click({ f: 740, dur: 0.035, gain: 0.32 });
+      }
+
+      async function resume() {
+        await AudioLab.resume();
+      }
+
+      function play(name) {
+        // Guard: iOS will be silent until resume() is called.
+        if (name === "shoot" && picks.shoot === 1) playShoot1();
+        else if (name === "correct" && picks.correct === 4) playCorrect4();
+        else if (name === "wrong" && picks.wrong === 1) playWrong1();
+        else if (name === "miss" && picks.miss === 2) playMiss2();
+        else if (name === "ui" && picks.ui === 1) playUi1();
+      }
+
+      return { resume, play };
+    })();
+
+    // ===== Tiny self-tests (console) =====
+    // Lightweight sanity checks to catch accidental regressions.
+    (function runSelfTests() {
+      for (let i = 0; i < 80; i++) {
+        const q = makeQuestion();
+        console.assert(typeof q.text === "string" && q.text.includes("-"), "Question text format");
+        console.assert(Number.isInteger(q.correct) && q.correct >= 0 && q.correct <= 20, "Correct range");
+        console.assert(Array.isArray(q.choices) && q.choices.length === 4, "Choices length 4");
+
+        const uniq = new Set(q.choices);
+        console.assert(uniq.size === 4, "Choices are unique");
+        console.assert(uniq.has(q.correct), "Choices include correct");
+
+        for (const c of q.choices) {
+          console.assert(Number.isInteger(c) && c >= 0 && c <= 20, "Choice range");
+        }
+
+        // Parse test: ensure text matches correct
+        const m = q.text.match(/^\s*(\d+)\s*-\s*(\d+)\s*$/);
+        console.assert(!!m, "Question text parseable");
+        if (m) {
+          const a = Number(m[1]);
+          const b = Number(m[2]);
+          console.assert(a >= 0 && a <= 20, "Parsed a range");
+          console.assert(b >= 0 && b <= a, "Parsed b range");
+          console.assert(a - b === q.correct, "Parsed correct matches");
+        }
+
+        // Extra test: choices shouldn't be strictly sorted (basic randomness smoke test)
+        const sorted = [...q.choices].slice().sort((x, y) => x - y).join(",");
+        console.assert(q.choices.join(",") !== sorted || i < 3, "Choices appear shuffled (smoke)");
+
+        // Lane mapping test: the lane index of the correct value should map back to correct.
+        const idx = q.choices.indexOf(q.correct);
+        console.assert(idx >= 0 && idx < 4, "Correct value has a lane index");
+        console.assert(q.choices[idx] === q.correct, "Lane index maps to correct value");
+      }
+    })();
+
+    // ===== Scenes =====
+    class BootScene extends Phaser.Scene {
+      constructor() { super("boot"); }
+      create() {
+        const g = this.add.graphics();
+
+        // Player texture
+        g.clear();
+        g.fillStyle(0x4ade80, 1);
+        g.fillRoundedRect(0, 0, 64, 28, 10);
+        g.generateTexture("player", 64, 28);
+
+        // Choice texture
+        g.clear();
+        g.fillStyle(0x60a5fa, 1);
+        g.fillRoundedRect(0, 0, 78, 44, 12);
+        g.lineStyle(2, 0x0b1220, 0.7);
+        g.strokeRoundedRect(1, 1, 76, 42, 11);
+        g.generateTexture("choice", 78, 44);
+
+        // Bullet texture
+        g.clear();
+        g.fillStyle(0xfbbf24, 1);
+        g.fillRoundedRect(0, 0, 10, 18, 4);
+        g.generateTexture("bullet", 10, 18);
+
+        g.destroy();
+        this.scene.start("start");
+      }
+    }
+
+    class StartScene extends Phaser.Scene {
+      constructor() { super("start"); }
+      create() {
+        const { width: w, height: h } = this.scale;
+
+        this.add.text(w/2, h*0.22, "算数レーンシューティング\n(MVP)", {
+          fontFamily: "system-ui, -apple-system, Segoe UI, Roboto, sans-serif",
+          fontSize: "34px",
+          color: "#e5e7eb",
+          align: "center"
+        }).setOrigin(0.5);
+
+        const helpText = `・4レーンに答えが流れてくる
+・スワイプ左右でレーン移動
+・ダブルタップで移動＋発射（即判定）
+・弾を撃たなくても、判定ライン到達時に今いるレーンで自動判定
+・正解に当たると+1
+・不正解 or 取り逃しでライフ-1（3で終了）
+
+※タップでも移動できます（楽な方でOK）`;
+
+        this.add.text(w/2, h*0.45, helpText, {
+          fontFamily: "system-ui, -apple-system, Segoe UI, Roboto, sans-serif",
+          fontSize: "18px",
+          color: "#cbd5e1",
+          align: "left",
+          lineSpacing: 8
+        }).setOrigin(0.5);
+
+        const btn = this.add.text(w/2, h*0.78, "START", {
+          fontFamily: "system-ui, -apple-system, Segoe UI, Roboto, sans-serif",
+          fontSize: "28px",
+          color: "#0b0f19",
+          backgroundColor: "#fbbf24",
+          padding: { left: 18, right: 18, top: 10, bottom: 10 }
+        }).setOrigin(0.5).setInteractive({ useHandCursor: true });
+
+        const start = async () => {
+          await SFX.resume();
+          SFX.play("ui");
+          this.scene.start("game", { score: 0, lives: 3 });
+        };
+        btn.on("pointerdown", start);
+        this.input.once("pointerdown", start);
+      }
+    }
+
+    class GameScene extends Phaser.Scene {
+      constructor() {
+        super("game");
+        this.lane = 1;
+        this.laneCenters = [];
+        this.player = null;
+        this.choiceSprites = [];
+        this.choiceTexts = [];
+        this.roundActive = false;
+        this.roundFinished = false;
+        this.score = 0;
+        this.lives = 3;
+        this.roundCount = 0;
+        this.currentSpeed = 0;
+        this.isPaused = false;
+        this.bullets = null;
+        this.lastTapTime = 0;
+        this.lastTapLane = -1;
+        this.lastTapX = 0;
+        this.lastTapY = 0;
+        this.question = null;
+      }
+
+      init(data) {
+        this.score = data?.score ?? 0;
+        this.lives = data?.lives ?? 3;
+        this.roundCount = 0;
+        this.currentSpeed = 0;
+        this.isPaused = false;
+        this.roundActive = false;
+        this.roundFinished = false;
+        this.lastTapTime = 0;
+        this.lastTapLane = -1;
+        this.lastTapX = 0;
+        this.lastTapY = 0;
+      }
+
+      create() {
+        const { width: w, height: h } = this.scale;
+
+        this.cameras.main.setBackgroundColor("#0b0f19");
+
+        // Lanes
+        const laneW = w / 4;
+        this.laneCenters = [0,1,2,3].map(i => (i + 0.5) * laneW);
+
+        const lanesG = this.add.graphics();
+        lanesG.lineStyle(2, 0x334155, 0.8);
+        for (let i = 1; i <= 3; i++) lanesG.lineBetween(i*laneW, 80, i*laneW, h);
+        lanesG.lineStyle(2, 0x1f2937, 1);
+        lanesG.lineBetween(0, 80, w, 80);
+
+        // UI
+        this.questionText = this.add.text(w/2, 28, "", {
+          fontFamily: "system-ui, -apple-system, Segoe UI, Roboto, sans-serif",
+          fontSize: "30px",
+          color: "#e5e7eb"
+        }).setOrigin(0.5);
+
+        this.scoreText = this.add.text(14, 88, "SCORE: 0", {
+          fontFamily: "system-ui, -apple-system, Segoe UI, Roboto, sans-serif",
+          fontSize: "18px",
+          color: "#cbd5e1"
+        });
+
+        this.livesText = this.add.text(w - 14, 88, "❤️❤️❤️", {
+          fontFamily: "system-ui, -apple-system, Segoe UI, Roboto, sans-serif",
+          fontSize: "18px",
+          color: "#cbd5e1"
+        }).setOrigin(1, 0);
+
+        this.speedText = this.add.text(14, 112, "SPEED: 0", {
+          fontFamily: "system-ui, -apple-system, Segoe UI, Roboto, sans-serif",
+          fontSize: "16px",
+          color: "#94a3b8"
+        });
+
+        // Debug (helps verify lane/answer selection)
+        this.debugText = this.add.text(14, h - 26, "", {
+          fontFamily: "system-ui, -apple-system, Segoe UI, Roboto, sans-serif",
+          fontSize: "12px",
+          color: "#64748b"
+        });
+
+        // Pause button
+        this.pauseBtn = this.add.text(w - 14, 28, "⏸", {
+          fontFamily: "system-ui, -apple-system, Segoe UI, Roboto, sans-serif",
+          fontSize: "26px",
+          color: "#e5e7eb",
+          backgroundColor: "#111827",
+          padding: { left: 10, right: 10, top: 6, bottom: 6 }
+        }).setOrigin(1, 0.5).setInteractive({ useHandCursor: true });
+
+        this.pauseBtn.on("pointerdown", () => {
+          SFX.play("ui");
+          if (this.isPaused) return;
+          this.isPaused = true;
+          this.scene.launch("pause");
+          this.scene.pause();
+        });
+
+        // Bullets
+        this.bullets = this.physics.add.group({ allowGravity: false });
+
+        // Player
+        this.lane = 1;
+        this.player = this.physics.add.image(this.laneCenters[this.lane], h - 70, "player");
+        this.player.setImmovable(true);
+        this.player.body.allowGravity = false;
+
+        // Visual answer line (judge line)
+        this.judgeY = h - 95;
+        const lineG = this.add.graphics();
+        lineG.lineStyle(2, 0x64748b, 0.7);
+        lineG.lineBetween(0, this.judgeY, w, this.judgeY);
+
+        this.judgeLabel = this.add.text(w - 14, this.judgeY - 18, "JUDGE", {
+          fontFamily: "system-ui, -apple-system, Segoe UI, Roboto, sans-serif",
+          fontSize: "12px",
+          color: "#64748b"
+        }).setOrigin(1, 0.5);
+
+        // Input
+        this.setupInput();
+
+        // Start
+        this.newRound();
+      }
+
+      setupInput() {
+        const { width: w } = this.scale;
+        const laneW = w / 4;
+
+        let downX = 0;
+        let downY = 0;
+        let downTime = 0;
+
+        const DOUBLE_TAP_MS = 420;
+        const DOUBLE_TAP_DIST = 70; // px; allows slight drift between taps
+
+        this.input.on("pointerdown", (p) => {
+          downX = p.x;
+          downY = p.y;
+          downTime = performance.now();
+
+          const targetLane = Phaser.Math.Clamp(Math.floor(p.x / laneW), 0, 3);
+          const now = performance.now();
+
+          const isDoubleTap =
+            (now - this.lastTapTime) <= DOUBLE_TAP_MS &&
+            Phaser.Math.Distance.Between(p.x, p.y, this.lastTapX, this.lastTapY) <= DOUBLE_TAP_DIST;
+
+          if (isDoubleTap) {
+            this.setLane(targetLane);
+            SFX.play("shoot");
+            this.shootAtLane(targetLane);
+            if (this.debugText) {
+              const chosenValue = this.question?.choices?.[targetLane];
+              const ok = (chosenValue === this.question?.correct);
+              this.debugText.setText(`SHOT lane=${targetLane+1} value=${chosenValue} correct=${this.question?.correct} -> ${ok ? "OK" : "NG"}`);
+            }
+            this.lastTapTime = 0;
+            this.lastTapLane = -1;
+            this.lastTapX = 0;
+            this.lastTapY = 0;
+          } else {
+            this.setLane(targetLane);
+            this.lastTapTime = now;
+            this.lastTapLane = targetLane;
+            this.lastTapX = p.x;
+            this.lastTapY = p.y;
+          }
+        });
+
+        this.input.on("pointerup", (p) => {
+          const dx = p.x - downX;
+          const dy = p.y - downY;
+          const dt = performance.now() - downTime;
+
+          const SWIPE_MIN_X = 40;
+          const MAX_Y = 60;
+          const MAX_TIME = 350;
+
+          if (dt <= MAX_TIME && Math.abs(dy) <= MAX_Y && Math.abs(dx) >= SWIPE_MIN_X) {
+            // Prevent swipe from chaining into a double tap
+            this.lastTapTime = 0;
+            this.lastTapLane = -1;
+            this.lastTapX = 0;
+            this.lastTapY = 0;
+
+            if (dx > 0) this.moveLane(+1);
+            else this.moveLane(-1);
+            return;
+          }
+
+          
+        });
+      }
+
+      moveLane(delta) {
+        this.setLane(Phaser.Math.Clamp(this.lane + delta, 0, 3));
+      }
+
+      setLane(l) {
+        if (l === this.lane) return;
+        this.lane = l;
+        this.tweens.add({ targets: this.player, x: this.laneCenters[this.lane], duration: 120, ease: "Sine.easeOut" });
+      }
+
+      clearChoices() {
+        for (const s of this.choiceSprites) s.destroy();
+        for (const t of this.choiceTexts) t.destroy();
+        this.choiceSprites = [];
+        this.choiceTexts = [];
+      }
+
+      shootAtLane(targetLane) {
+        // Double-tap selection should NEVER be counted as "miss".
+        if (this.roundFinished || this.isPaused || !this.bullets) return;
+        if (!this.choiceSprites || this.choiceSprites.length < 4) return;
+
+        // Lock the round immediately.
+        this.roundActive = false;
+        this.roundFinished = true;
+
+        const { height: h } = this.scale;
+        const x = this.laneCenters[targetLane];
+        const startY = (this.player?.y ?? (h - 70)) - 22;
+
+        const choice = this.choiceSprites[targetLane];
+        const targetY = choice?.y ?? 120;
+
+        const b = this.bullets.create(x, startY, "bullet");
+        b.setDataEnabled();
+        if (b.body) b.body.setSize(24, 24, true);
+
+        const distance = Math.max(0, startY - targetY);
+        const speed = 900;
+        const duration = Phaser.Math.Clamp((distance / speed) * 1000, 80, 260);
+
+        this.tweens.add({
+          targets: b,
+          y: targetY,
+          duration,
+          ease: "Sine.easeIn",
+          onComplete: () => {
+            if (b && b.active) b.destroy();
+            // Decide correctness from the round data (stable even if sprites are destroyed)
+            const chosenValue = this.question?.choices?.[targetLane];
+            const isCorrect = (chosenValue === this.question?.correct);
+            this.finishRound(isCorrect);
+          }
+        });
+      }
+
+      // Called after a shot OR collision; always progresses to next question.
+      finishRound(isCorrect) {
+        if (this.bullets) this.bullets.clear(true, true);
+        this.clearChoices();
+
+        if (isCorrect) {
+          this.score += 1;
+          SFX.play("correct");
+          this.flash("✔ 正解", 0x4ade80);
+        } else {
+          this.lives -= 1;
+          SFX.play("wrong");
+          this.flash("✘ まちがい", 0xf87171);
+        }
+
+        this.time.delayedCall(420, () => this.newRound());
+      }
+
+      // Back-compat: bullet overlap can still call this.
+      resolveChoiceHit(isCorrect) {
+        if (this.roundFinished) return;
+        this.roundFinished = true;
+        this.roundActive = false;
+        this.finishRound(!!isCorrect);
+      }
+
+      newRound() {
+        if (this.lives <= 0) {
+          this.scene.start("gameover", { score: this.score });
+          return;
+        }
+
+        this.roundCount += 1;
+        this.roundFinished = false;
+        this.roundActive = true;
+
+        if (this.bullets) this.bullets.clear(true, true);
+        this.clearChoices();
+
+        this.question = makeQuestion();
+        this.questionText.setText(this.question.text);
+        this.scoreText.setText(`SCORE: ${this.score}`);
+        this.livesText.setText(hearts(this.lives));
+
+        const { height: h } = this.scale;
+
+        const baseSpeed = 170;
+        const fallSpeed = Math.min(420, baseSpeed + this.roundCount * 10);
+        this.currentSpeed = fallSpeed;
+        this.speedText.setText(`SPEED: ${Math.round(fallSpeed)}`);
+
+        for (let i = 0; i < 4; i++) {
+          const value = this.question.choices[i];
+          const isCorrect = value === this.question.correct;
+
+          const s = this.physics.add.image(this.laneCenters[i], -60, "choice");
+          s.body.allowGravity = false;
+          s.setVelocityY(fallSpeed);
+          s.setDataEnabled();
+          s.data.set("value", value);
+          s.data.set("correct", isCorrect);
+
+          // More forgiving bodies (touch-friendly)
+          if (s.body) s.body.setSize(96, 64, true);
+
+          const t = this.add.text(s.x, s.y, String(value), {
+            fontFamily: "system-ui, -apple-system, Segoe UI, Roboto, sans-serif",
+            fontSize: "22px",
+            color: "#0b0f19"
+          }).setOrigin(0.5);
+
+          this.choiceSprites.push(s);
+          this.choiceTexts.push(t);
+
+          // Bullet overlap check (optional; shootAtLane resolves without needing collision)
+          this.physics.add.overlap(this.bullets, s, (bullet, choice) => {
+            // If the round is already being resolved (e.g., via shootAtLane), ignore overlaps.
+            if (this.roundFinished) return;
+            bullet.destroy();
+            this.resolveChoiceHit(choice.data.get("correct"));
+          });
+        }
+
+        this.missCheckY = h + 30;
+        // If you want to judge exactly on the line, keep judgeY stable
+        // (set in create).
+      }
+
+      flash(label, color) {
+        const { width: w, height: h } = this.scale;
+        const txt = this.add.text(w/2, h*0.35, label, {
+          fontFamily: "system-ui, -apple-system, Segoe UI, Roboto, sans-serif",
+          fontSize: "34px",
+          color: "#0b0f19",
+          backgroundColor: Phaser.Display.Color.IntegerToColor(color).rgba,
+          padding: { left: 14, right: 14, top: 10, bottom: 10 }
+        }).setOrigin(0.5);
+
+        this.tweens.add({
+          targets: txt,
+          alpha: 0,
+          duration: 380,
+          ease: "Sine.easeOut",
+          onComplete: () => txt.destroy()
+        });
+
+        this.scoreText.setText(`SCORE: ${this.score}`);
+        this.livesText.setText(hearts(this.lives));
+      }
+
+      update() {
+        // Keep texts aligned to sprites always
+        for (let i = 0; i < this.choiceSprites.length; i++) {
+          const s = this.choiceSprites[i];
+          const t = this.choiceTexts[i];
+          if (s && t) t.setPosition(s.x, s.y);
+        }
+
+        // Auto-judge on the judge line: if you are in the correct lane when choices reach the line, it's correct.
+        if (this.roundActive && !this.roundFinished) {
+          const lead = this.choiceSprites[0];
+          if (lead && lead.y >= this.judgeY) {
+            this.roundActive = false;
+            this.roundFinished = true;
+
+            const chosenValue = this.question?.choices?.[this.lane];
+            const isCorrect = (chosenValue === this.question?.correct);
+            if (this.debugText) this.debugText.setText(`AUTO lane=${this.lane+1} value=${chosenValue} correct=${this.question?.correct} -> ${isCorrect ? "OK" : "NG"}`);
+
+            this.finishRound(isCorrect);
+          }
+        }
+
+        // Only check misses during active falling (fallback)
+        if (this.roundActive) {
+          const allPast = this.choiceSprites.length > 0 && this.choiceSprites.every(s => s.y > this.missCheckY);
+          if (allPast) {
+            this.roundActive = false;
+            this.roundFinished = true; // prevents double resolving
+            if (this.bullets) this.bullets.clear(true, true);
+            this.clearChoices();
+            this.lives -= 1;
+            SFX.play("miss");
+            this.flash("取り逃し", 0xfbbf24);
+            if (this.debugText) this.debugText.setText("MISS: choices passed bottom before selection");
+            this.time.delayedCall(420, () => this.newRound());
+          }
+        }
+
+        // Cleanup bullets that go off-screen
+        if (this.bullets) {
+          this.bullets.children.each((b) => {
+            if (b && b.active && b.y < -40) b.destroy();
+          });
+        }
+      }
+    }
+
+    class PauseScene extends Phaser.Scene {
+      constructor() { super("pause"); }
+      create() {
+        const { width: w, height: h } = this.scale;
+
+        this.add.rectangle(w/2, h/2, w, h, 0x000000, 0.55);
+
+        this.add.text(w/2, h*0.32, "PAUSED", {
+          fontFamily: "system-ui, -apple-system, Segoe UI, Roboto, sans-serif",
+          fontSize: "40px",
+          color: "#e5e7eb"
+        }).setOrigin(0.5);
+
+        const resumeBtn = this.add.text(w/2, h*0.50, "RESUME", {
+          fontFamily: "system-ui, -apple-system, Segoe UI, Roboto, sans-serif",
+          fontSize: "26px",
+          color: "#0b0f19",
+          backgroundColor: "#4ade80",
+          padding: { left: 18, right: 18, top: 10, bottom: 10 }
+        }).setOrigin(0.5).setInteractive({ useHandCursor: true });
+
+        const quitBtn = this.add.text(w/2, h*0.62, "QUIT", {
+          fontFamily: "system-ui, -apple-system, Segoe UI, Roboto, sans-serif",
+          fontSize: "26px",
+          color: "#0b0f19",
+          backgroundColor: "#fbbf24",
+          padding: { left: 22, right: 22, top: 10, bottom: 10 }
+        }).setOrigin(0.5).setInteractive({ useHandCursor: true });
+
+        const pauseHelp = `途中でやめる：QUIT\n続ける：RESUME`;
+        this.add.text(w/2, h*0.76, pauseHelp, {
+          fontFamily: "system-ui, -apple-system, Segoe UI, Roboto, sans-serif",
+          fontSize: "16px",
+          color: "#cbd5e1",
+          align: "center",
+          lineSpacing: 8
+        }).setOrigin(0.5);
+
+        const resume = () => {
+          const game = this.scene.get("game");
+          game.isPaused = false;
+          this.scene.stop();
+          this.scene.resume("game");
+        };
+
+        const quit = () => {
+          const game = this.scene.get("game");
+          game.isPaused = false;
+          this.scene.stop("game");
+          this.scene.stop();
+          this.scene.start("start");
+        };
+
+        resumeBtn.on("pointerdown", resume);
+        quitBtn.on("pointerdown", quit);
+      }
+    }
+
+    class GameOverScene extends Phaser.Scene {
+      constructor() { super("gameover"); }
+      init(data) {
+        this.finalScore = data?.score ?? 0;
+      }
+      create() {
+        const { width: w, height: h } = this.scale;
+
+        this.add.text(w/2, h*0.28, "GAME OVER", {
+          fontFamily: "system-ui, -apple-system, Segoe UI, Roboto, sans-serif",
+          fontSize: "44px",
+          color: "#f87171"
+        }).setOrigin(0.5);
+
+        this.add.text(w/2, h*0.42, `SCORE: ${this.finalScore}`, {
+          fontFamily: "system-ui, -apple-system, Segoe UI, Roboto, sans-serif",
+          fontSize: "28px",
+          color: "#e5e7eb"
+        }).setOrigin(0.5);
+
+        const btn = this.add.text(w/2, h*0.68, "RETRY", {
+          fontFamily: "system-ui, -apple-system, Segoe UI, Roboto, sans-serif",
+          fontSize: "28px",
+          color: "#0b0f19",
+          backgroundColor: "#60a5fa",
+          padding: { left: 18, right: 18, top: 10, bottom: 10 }
+        }).setOrigin(0.5).setInteractive({ useHandCursor: true });
+
+        const retry = () => this.scene.start("game", { score: 0, lives: 3 });
+        btn.on("pointerdown", retry);
+        this.input.once("pointerdown", retry);
+
+        this.add.text(w/2, h*0.85, "タップでリトライ", {
+          fontFamily: "system-ui, -apple-system, Segoe UI, Roboto, sans-serif",
+          fontSize: "16px",
+          color: "#94a3b8"
+        }).setOrigin(0.5);
+      }
+    }
+
+    // ===== Game Config =====
+    const config = {
+      type: Phaser.AUTO,
+      parent: "game",
+      backgroundColor: "#0b0f19",
+      physics: {
+        default: "arcade",
+        arcade: { debug: false }
+      },
+      scale: {
+        mode: Phaser.Scale.FIT,
+        autoCenter: Phaser.Scale.CENTER_BOTH,
+        width: 390,
+        height: 844
+      },
+      scene: [BootScene, StartScene, GameScene, PauseScene, GameOverScene]
+    };
+
+    new Phaser.Game(config);
+  </script>
+</body>
+</html>
