@@ -3,11 +3,8 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-  <title>Math Lane Shooter (MVP)</title>
-  <style>
-    html, body { height: 100%; margin: 0; background:#0b0f19; }
-    #game { width: 100vw; height: 100vh; touch-action: none; }
-  </style>
+  <title>Math Lane Shooter</title>
+  <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
   <div id="game"></div>
@@ -294,37 +291,81 @@
       create() {
         const { width: w, height: h } = this.scale;
 
-        this.add.text(w/2, h*0.22, "算数レーンシューティング\n(MVP)", {
+        // Background gradient effect
+        const bgGradient = this.add.graphics();
+        bgGradient.fillGradientStyle(0x1a1f3a, 0x0f172a, 0x1e293b, 0x0f172a);
+        bgGradient.fillRect(0, 0, w, h);
+        
+        // Title with glow effect
+        const title = this.add.text(w/2, h*0.18, "算数レーンシューティング", {
           fontFamily: "system-ui, -apple-system, Segoe UI, Roboto, sans-serif",
-          fontSize: "34px",
-          color: "#e5e7eb",
+          fontSize: "36px",
+          color: "#06b6d4",
+          fontStyle: "bold",
+          align: "center",
+          shadow: {
+            offsetX: 0,
+            offsetY: 0,
+            color: "#06b6d4",
+            blur: 15,
+            stroke: true,
+            fill: true
+          }
+        }).setOrigin(0.5);
+        
+        // Subtitle
+        const subtitle = this.add.text(w/2, h*0.24, "数学スキルを鍛えるシューティングゲーム", {
+          fontFamily: "system-ui, -apple-system, Segoe UI, Roboto, sans-serif",
+          fontSize: "16px",
+          color: "#cbd5e1",
+          fontStyle: "italic",
           align: "center"
         }).setOrigin(0.5);
 
-        const helpText = `・4レーンに答えが流れてくる
-・スワイプ左右でレーン移動
-・ダブルタップで移動＋発射（即判定）
-・弾を撃たなくても、判定ライン到達時に今いるレーンで自動判定
-・正解に当たると+1
-・不正解 or 取り逃しでライフ-1（3で終了）
+        // Instructions panel
+        const panel = this.add.rectangle(w/2, h*0.48, w * 0.9, h * 0.35, 0x1a1f3a, 0.8);
+        panel.setStrokeStyle(2, 0x06b6d4, 0.3);
+        
+        const helpText = `🎯 4レーンに答えが流れてくる
+👆 スワイプ左右でレーン移動
+⚡ ダブルタップで移動＋発射（即判定）
+🎯 弾を撃たなくても、判定ライン到達時に自動判定
+✅ 正解に当たると+1点
+❌ 不正解 or 取り逃しでライフ-1（3で終了）
 
-※タップでも移動できます（楽な方でOK）`;
+💡 ヒント：タップでも移動できます（楽な方でOK）`;
 
-        this.add.text(w/2, h*0.45, helpText, {
+        this.add.text(w/2, h*0.48, helpText, {
           fontFamily: "system-ui, -apple-system, Segoe UI, Roboto, sans-serif",
-          fontSize: "18px",
-          color: "#cbd5e1",
+          fontSize: "16px",
+          color: "#e5e7eb",
           align: "left",
-          lineSpacing: 8
+          lineSpacing: 10
         }).setOrigin(0.5);
 
-        const btn = this.add.text(w/2, h*0.78, "START", {
+        // Modern START button
+        const btn = this.add.text(w/2, h*0.75, "START", {
           fontFamily: "system-ui, -apple-system, Segoe UI, Roboto, sans-serif",
           fontSize: "28px",
           color: "#0b0f19",
           backgroundColor: "#fbbf24",
-          padding: { left: 18, right: 18, top: 10, bottom: 10 }
+          padding: { left: 32, right: 32, top: 16, bottom: 16 },
+          borderRadius: 16,
+          fontStyle: "bold"
         }).setOrigin(0.5).setInteractive({ useHandCursor: true });
+        
+        // Button animations
+        btn.on("pointerover", () => {
+          btn.setStyle({ backgroundColor: "#f59e0b", scale: 1.05 });
+        });
+        
+        btn.on("pointerout", () => {
+          btn.setStyle({ backgroundColor: "#fbbf24", scale: 1 });
+        });
+        
+        btn.on("pointerdown", () => {
+          btn.setStyle({ backgroundColor: "#d97706", scale: 0.95 });
+        });
 
         const start = async () => {
           await SFX.resume();
@@ -333,6 +374,27 @@
         };
         btn.on("pointerdown", start);
         this.input.once("pointerdown", start);
+        
+        // Floating animation for title
+        this.tweens.add({
+          targets: title,
+          y: h*0.18 - 5,
+          duration: 2000,
+          ease: "Sine.easeInOut",
+          yoyo: true,
+          repeat: -1
+        });
+        
+        // Pulse animation for button
+        this.tweens.add({
+          targets: btn,
+          scaleX: 1.02,
+          scaleY: 1.02,
+          duration: 1000,
+          ease: "Sine.easeInOut",
+          yoyo: true,
+          repeat: -1
+        });
       }
     }
 
@@ -376,7 +438,7 @@
       create() {
         const { width: w, height: h } = this.scale;
 
-        this.cameras.main.setBackgroundColor("#0b0f19");
+        this.cameras.main.setBackgroundColor("#1a1f3a");
 
         // Lanes
         const laneW = w / 4;
@@ -388,30 +450,52 @@
         lanesG.lineStyle(2, 0x1f2937, 1);
         lanesG.lineBetween(0, 80, w, 80);
 
-        // UI
+        // UI with modern styling
         this.questionText = this.add.text(w/2, 28, "", {
           fontFamily: "system-ui, -apple-system, Segoe UI, Roboto, sans-serif",
-          fontSize: "30px",
-          color: "#e5e7eb"
+          fontSize: "32px",
+          color: "#06b6d4",
+          fontStyle: "bold",
+          shadow: {
+            offsetX: 0,
+            offsetY: 0,
+            color: "#06b6d4",
+            blur: 10,
+            stroke: true,
+            fill: true
+          }
         }).setOrigin(0.5);
 
-        this.scoreText = this.add.text(14, 88, "SCORE: 0", {
+        // Score panel
+        const scorePanel = this.add.rectangle(80, 110, 140, 50, 0x1a1f3a, 0.8);
+        scorePanel.setStrokeStyle(2, 0xfbbf24, 0.5);
+        
+        this.scoreText = this.add.text(80, 110, "SCORE: 0", {
           fontFamily: "system-ui, -apple-system, Segoe UI, Roboto, sans-serif",
           fontSize: "18px",
-          color: "#cbd5e1"
-        });
+          color: "#fbbf24",
+          fontStyle: "bold"
+        }).setOrigin(0.5);
 
-        this.livesText = this.add.text(w - 14, 88, "❤️❤️❤️", {
+        // Lives panel
+        const livesPanel = this.add.rectangle(w - 80, 110, 100, 50, 0x1a1f3a, 0.8);
+        livesPanel.setStrokeStyle(2, 0xef4444, 0.5);
+        
+        this.livesText = this.add.text(w - 80, 110, "❤️❤️❤️", {
           fontFamily: "system-ui, -apple-system, Segoe UI, Roboto, sans-serif",
-          fontSize: "18px",
-          color: "#cbd5e1"
-        }).setOrigin(1, 0);
+          fontSize: "20px"
+        }).setOrigin(0.5);
 
-        this.speedText = this.add.text(14, 112, "SPEED: 0", {
+        // Speed indicator panel
+        const speedPanel = this.add.rectangle(80, 160, 120, 40, 0x1a1f3a, 0.8);
+        speedPanel.setStrokeStyle(2, 0x10b981, 0.5);
+        
+        this.speedText = this.add.text(80, 160, "SPEED: 0", {
           fontFamily: "system-ui, -apple-system, Segoe UI, Roboto, sans-serif",
-          fontSize: "16px",
-          color: "#94a3b8"
-        });
+          fontSize: "14px",
+          color: "#10b981",
+          fontStyle: "bold"
+        }).setOrigin(0.5);
 
         // Debug (helps verify lane/answer selection)
         this.debugText = this.add.text(14, h - 26, "", {
@@ -420,14 +504,24 @@
           color: "#64748b"
         });
 
-        // Pause button
-        this.pauseBtn = this.add.text(w - 14, 28, "⏸", {
+        // Modern pause button
+        this.pauseBtn = this.add.text(w - 30, 35, "⏸", {
           fontFamily: "system-ui, -apple-system, Segoe UI, Roboto, sans-serif",
-          fontSize: "26px",
+          fontSize: "24px",
           color: "#e5e7eb",
-          backgroundColor: "#111827",
-          padding: { left: 10, right: 10, top: 6, bottom: 6 }
-        }).setOrigin(1, 0.5).setInteractive({ useHandCursor: true });
+          backgroundColor: "#1e293b",
+          padding: { left: 12, right: 12, top: 8, bottom: 8 },
+          borderRadius: 8
+        }).setOrigin(0.5).setInteractive({ useHandCursor: true });
+        
+        // Pause button hover effects
+        this.pauseBtn.on("pointerover", () => {
+          this.pauseBtn.setStyle({ backgroundColor: "#334155", scale: 1.1 });
+        });
+        
+        this.pauseBtn.on("pointerout", () => {
+          this.pauseBtn.setStyle({ backgroundColor: "#1e293b", scale: 1 });
+        });
 
         this.pauseBtn.on("pointerdown", () => {
           SFX.play("ui");
@@ -446,17 +540,41 @@
         this.player.setImmovable(true);
         this.player.body.allowGravity = false;
 
-        // Visual answer line (judge line)
+        // Modern judge line with glow effect
         this.judgeY = h - 95;
         const lineG = this.add.graphics();
-        lineG.lineStyle(2, 0x64748b, 0.7);
+        
+        // Glow effect for judge line
+        lineG.lineStyle(4, 0x06b6d4, 0.3);
         lineG.lineBetween(0, this.judgeY, w, this.judgeY);
-
-        this.judgeLabel = this.add.text(w - 14, this.judgeY - 18, "JUDGE", {
+        
+        // Main judge line
+        lineG.lineStyle(2, 0x06b6d4, 0.8);
+        lineG.lineBetween(0, this.judgeY, w, this.judgeY);
+        
+        // Animated judge line
+        this.judgeLine = lineG;
+        
+        // Judge label with modern styling
+        this.judgeLabel = this.add.text(w - 20, this.judgeY - 20, "JUDGE LINE", {
           fontFamily: "system-ui, -apple-system, Segoe UI, Roboto, sans-serif",
           fontSize: "12px",
-          color: "#64748b"
+          color: "#06b6d4",
+          fontStyle: "bold",
+          backgroundColor: "#1a1f3a",
+          padding: { left: 8, right: 8, top: 4, bottom: 4 },
+          borderRadius: 4
         }).setOrigin(1, 0.5);
+        
+        // Pulsing animation for judge line
+        this.tweens.add({
+          targets: this.judgeLabel,
+          alpha: 0.6,
+          duration: 1000,
+          ease: "Sine.easeInOut",
+          yoyo: true,
+          repeat: -1
+        });
 
         // Input
         this.setupInput();
@@ -681,24 +799,76 @@
 
       flash(label, color) {
         const { width: w, height: h } = this.scale;
+        
+        // Background panel for feedback
+        const panel = this.add.rectangle(w/2, h*0.35, w * 0.8, 80, 0x1a1f3a, 0.9);
+        panel.setStrokeStyle(3, color, 0.8);
+        
+        // Feedback text with glow effect
         const txt = this.add.text(w/2, h*0.35, label, {
           fontFamily: "system-ui, -apple-system, Segoe UI, Roboto, sans-serif",
-          fontSize: "34px",
-          color: "#0b0f19",
-          backgroundColor: Phaser.Display.Color.IntegerToColor(color).rgba,
-          padding: { left: 14, right: 14, top: 10, bottom: 10 }
+          fontSize: "36px",
+          color: "#ffffff",
+          fontStyle: "bold",
+          shadow: {
+            offsetX: 0,
+            offsetY: 0,
+            color: Phaser.Display.Color.IntegerToColor(color).rgba,
+            blur: 20,
+            stroke: true,
+            fill: true
+          }
         }).setOrigin(0.5);
-
+        
+        // Scale animation
+        txt.setScale(0);
+        panel.setScale(0);
+        
         this.tweens.add({
-          targets: txt,
+          targets: [panel, txt],
+          scaleX: 1,
+          scaleY: 1,
+          duration: 200,
+          ease: "Back.easeOut"
+        });
+        
+        // Fade out animation
+        this.tweens.add({
+          targets: [panel, txt],
           alpha: 0,
-          duration: 380,
-          ease: "Sine.easeOut",
-          onComplete: () => txt.destroy()
+          duration: 400,
+          delay: 600,
+          ease: "Sine.easeIn",
+          onComplete: () => {
+            panel.destroy();
+            txt.destroy();
+          }
         });
 
+        // Update UI with animation
         this.scoreText.setText(`SCORE: ${this.score}`);
         this.livesText.setText(hearts(this.lives));
+        
+        // Pulse effect on score/lives panels
+        if (label.includes("正解")) {
+          this.tweens.add({
+            targets: this.scoreText,
+            scaleX: 1.2,
+            scaleY: 1.2,
+            duration: 200,
+            ease: "Sine.easeOut",
+            yoyo: true
+          });
+        } else if (label.includes("まちがい") || label.includes("取り逃し")) {
+          this.tweens.add({
+            targets: this.livesText,
+            scaleX: 1.2,
+            scaleY: 1.2,
+            duration: 200,
+            ease: "Sine.easeOut",
+            yoyo: true
+          });
+        }
       }
 
       update() {
@@ -815,35 +985,104 @@
       create() {
         const { width: w, height: h } = this.scale;
 
-        this.add.text(w/2, h*0.28, "GAME OVER", {
+        // Background overlay
+        const overlay = this.add.rectangle(w/2, h/2, w, h, 0x0f172a, 0.8);
+        
+        // Panel background
+        const panel = this.add.rectangle(w/2, h/2, w * 0.85, h * 0.7, 0x1a1f3a, 0.9);
+        panel.setStrokeStyle(2, 0x06b6d4, 0.5);
+        
+        // GAME OVER title with glow effect
+        const title = this.add.text(w/2, h*0.25, "GAME OVER", {
           fontFamily: "system-ui, -apple-system, Segoe UI, Roboto, sans-serif",
-          fontSize: "44px",
-          color: "#f87171"
+          fontSize: "48px",
+          color: "#ef4444",
+          fontStyle: "bold",
+          shadow: {
+            offsetX: 0,
+            offsetY: 0,
+            color: "#ef4444",
+            blur: 20,
+            stroke: true,
+            fill: true
+          }
         }).setOrigin(0.5);
-
-        this.add.text(w/2, h*0.42, `SCORE: ${this.finalScore}`, {
+        
+        // Score with animation
+        const scoreText = this.add.text(w/2, h*0.42, `SCORE: ${this.finalScore}`, {
           fontFamily: "system-ui, -apple-system, Segoe UI, Roboto, sans-serif",
-          fontSize: "28px",
-          color: "#e5e7eb"
+          fontSize: "32px",
+          color: "#fbbf24",
+          fontStyle: "bold"
         }).setOrigin(0.5);
-
-        const btn = this.add.text(w/2, h*0.68, "RETRY", {
+        
+        // Score animation
+        this.tweens.add({
+          targets: scoreText,
+          scaleX: 1.1,
+          scaleY: 1.1,
+          duration: 600,
+          ease: "Sine.easeInOut",
+          yoyo: true,
+          repeat: -1
+        });
+        
+        // Modern retry button
+        const btn = this.add.text(w/2, h*0.65, "RETRY", {
           fontFamily: "system-ui, -apple-system, Segoe UI, Roboto, sans-serif",
-          fontSize: "28px",
+          fontSize: "24px",
           color: "#0b0f19",
-          backgroundColor: "#60a5fa",
-          padding: { left: 18, right: 18, top: 10, bottom: 10 }
+          backgroundColor: "#06b6d4",
+          padding: { left: 24, right: 24, top: 14, bottom: 14 },
+          borderRadius: 12
         }).setOrigin(0.5).setInteractive({ useHandCursor: true });
+        
+        // Button hover effects
+        btn.on("pointerover", () => {
+          btn.setStyle({ backgroundColor: "#0891b2", scale: 1.05 });
+        });
+        
+        btn.on("pointerout", () => {
+          btn.setStyle({ backgroundColor: "#06b6d4", scale: 1 });
+        });
+        
+        btn.on("pointerdown", () => {
+          btn.setStyle({ backgroundColor: "#0e7490", scale: 0.95 });
+        });
 
         const retry = () => this.scene.start("game", { score: 0, lives: 3 });
         btn.on("pointerdown", retry);
         this.input.once("pointerdown", retry);
 
-        this.add.text(w/2, h*0.85, "タップでリトライ", {
+        // Subtle hint text
+        this.add.text(w/2, h*0.80, "タップまたはクリックでリトライ", {
           fontFamily: "system-ui, -apple-system, Segoe UI, Roboto, sans-serif",
-          fontSize: "16px",
-          color: "#94a3b8"
+          fontSize: "14px",
+          color: "#64748b",
+          fontStyle: "italic"
         }).setOrigin(0.5);
+        
+        // Fade in animation
+        overlay.setAlpha(0);
+        panel.setAlpha(0);
+        title.setAlpha(0);
+        scoreText.setAlpha(0);
+        btn.setAlpha(0);
+        
+        this.tweens.add({
+          targets: [overlay, panel],
+          alpha: 1,
+          duration: 400,
+          ease: "Sine.easeOut"
+        });
+        
+        this.tweens.add({
+          targets: [title, scoreText, btn],
+          alpha: 1,
+          duration: 600,
+          delay: 200,
+          ease: "Sine.easeOut"
+        });
       }
     }
 
@@ -851,7 +1090,7 @@
     const config = {
       type: Phaser.AUTO,
       parent: "game",
-      backgroundColor: "#0b0f19",
+      backgroundColor: "#1a1f3a",
       physics: {
         default: "arcade",
         arcade: { debug: false }
