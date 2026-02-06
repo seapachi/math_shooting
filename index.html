@@ -19,6 +19,8 @@
     const randInt = (min, max) => Math.floor(Math.random() * (max - min + 1)) + min;
     const FONT_TITLE = '"Orbitron", "Space Grotesk", sans-serif';
     const FONT_UI = '"Space Grotesk", sans-serif';
+    const SHIP_STYLES = ["sharp", "flare"];
+    let currentShip = "sharp";
 
     function shuffle(arr) {
       for (let i = arr.length - 1; i > 0; i--) {
@@ -279,11 +281,38 @@
       create() {
         const g = this.add.graphics();
 
-        // Player texture
+        // Player textures (two styles)
+        // Style A: sharp fighter
         g.clear();
-        g.fillStyle(0x22d3ee, 1);
-        g.fillRoundedRect(0, 0, 64, 28, 10);
-        g.generateTexture("player", 64, 28);
+        g.fillStyle(0x7dd3fc, 1);
+        g.beginPath();
+        g.moveTo(32, 0);
+        g.lineTo(64, 26);
+        g.lineTo(32, 22);
+        g.lineTo(0, 26);
+        g.closePath();
+        g.fillPath();
+        g.fillStyle(0x0b1024, 1);
+        g.fillCircle(32, 14, 4);
+        g.generateTexture("player_sharp", 64, 28);
+
+        // Style B: flared thrusters
+        g.clear();
+        g.fillStyle(0x7dd3fc, 1);
+        g.beginPath();
+        g.moveTo(32, 0);
+        g.lineTo(60, 24);
+        g.lineTo(32, 20);
+        g.lineTo(4, 24);
+        g.closePath();
+        g.fillPath();
+        g.fillStyle(0xf472b6, 0.95);
+        g.fillTriangle(20, 24, 28, 24, 24, 34);
+        g.fillTriangle(36, 24, 44, 24, 40, 34);
+        g.fillStyle(0xfbbf24, 0.9);
+        g.fillCircle(24, 30, 3);
+        g.fillCircle(40, 30, 3);
+        g.generateTexture("player_flare", 64, 36);
 
         // Choice texture
         g.clear();
@@ -342,6 +371,27 @@
           align: "center"
         }).setOrigin(0.5);
 
+        // Ship style toggle
+        const shipLabel = this.add.text(w/2, h*0.30, "", {
+          fontFamily: FONT_UI,
+          fontSize: "14px",
+          color: "#94a3b8",
+          backgroundColor: "#0b1024",
+          padding: { left: 10, right: 10, top: 6, bottom: 6 },
+          borderRadius: 10
+        }).setOrigin(0.5).setInteractive({ useHandCursor: true });
+        shipLabel.setDepth(10);
+
+        const updateShipLabel = () => {
+          shipLabel.setText(`SHIP: ${currentShip.toUpperCase()} (TAP TO SWITCH)`);
+        };
+        updateShipLabel();
+        shipLabel.on("pointerdown", () => {
+          currentShip = currentShip === "sharp" ? "flare" : "sharp";
+          SFX.play("ui");
+          updateShipLabel();
+        });
+
         // Instructions panel
         const panel = this.add.rectangle(w/2, h*0.48, w * 0.9, h * 0.35, 0x0b1024, 0.86);
         panel.setStrokeStyle(2, 0x7dd3fc, 0.35);
@@ -390,7 +440,7 @@ STARTでゲーム開始`;
         const start = async () => {
           await SFX.resume();
           SFX.play("ui");
-          this.scene.start("game", { score: 0, lives: 3 });
+          this.scene.start("game", { score: 0, lives: 3, ship: currentShip });
         };
         btn.on("pointerdown", start);
         this.input.once("pointerdown", start);
@@ -424,6 +474,7 @@ STARTでゲーム開始`;
         this.lane = 1;
         this.laneCenters = [];
         this.player = null;
+        this.ship = "sharp";
         this.choiceSprites = [];
         this.choiceTexts = [];
         this.roundActive = false;
@@ -444,6 +495,7 @@ STARTでゲーム開始`;
       init(data) {
         this.score = data?.score ?? 0;
         this.lives = data?.lives ?? 3;
+        this.ship = data?.ship ?? currentShip;
         this.roundCount = 0;
         this.currentSpeed = 0;
         this.isPaused = false;
@@ -561,7 +613,8 @@ STARTでゲーム開始`;
 
         // Player
         this.lane = 1;
-        this.player = this.physics.add.image(this.laneCenters[this.lane], h - 70, "player");
+        const playerTex = this.ship === "flare" ? "player_flare" : "player_sharp";
+        this.player = this.physics.add.image(this.laneCenters[this.lane], h - 70, playerTex);
         this.player.setImmovable(true);
         this.player.body.allowGravity = false;
 
