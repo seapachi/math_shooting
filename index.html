@@ -1,9 +1,12 @@
-<!doctype html>
+﻿<!doctype html>
 <html lang="ja">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <title>Math Lane Shooter</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;700&family=Space+Grotesk:wght@400;500;600&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
@@ -14,6 +17,8 @@
   <script>
     // ===== Utilities =====
     const randInt = (min, max) => Math.floor(Math.random() * (max - min + 1)) + min;
+    const FONT_TITLE = '"Orbitron", "Space Grotesk", sans-serif';
+    const FONT_UI = '"Space Grotesk", sans-serif';
 
     function shuffle(arr) {
       for (let i = arr.length - 1; i > 0; i--) {
@@ -21,6 +26,20 @@
         [arr[i], arr[j]] = [arr[j], arr[i]];
       }
       return arr;
+    }
+
+    function addStarfield(scene, w, h, count = 140) {
+      const g = scene.add.graphics();
+      for (let i = 0; i < count; i++) {
+        const x = Math.random() * w;
+        const y = Math.random() * h;
+        const r = Math.random() * 1.6 + 0.3;
+        const alpha = Math.random() * 0.6 + 0.2;
+        const tint = Phaser.Display.Color.GetColor(180 + randInt(0, 60), 200 + randInt(0, 40), 255);
+        g.fillStyle(tint, alpha);
+        g.fillCircle(x, y, r);
+      }
+      return g;
     }
 
     function makeQuestion() {
@@ -46,9 +65,8 @@
     }
 
     function hearts(n) {
-      return "❤️".repeat(Math.max(0, n));
+      return "\u2665".repeat(Math.max(0, n));
     }
-
     // ===== SFX (Web Audio synth: punchy shooter) =====
     // iOS requires user gesture before audio can play; we call SFX.resume() on START tap.
     // Picked set: shoot:1 correct:4 wrong:1 miss:2 ui:1
@@ -263,13 +281,13 @@
 
         // Player texture
         g.clear();
-        g.fillStyle(0x4ade80, 1);
+        g.fillStyle(0x22d3ee, 1);
         g.fillRoundedRect(0, 0, 64, 28, 10);
         g.generateTexture("player", 64, 28);
 
         // Choice texture
         g.clear();
-        g.fillStyle(0x60a5fa, 1);
+        g.fillStyle(0xf472b6, 1);
         g.fillRoundedRect(0, 0, 78, 44, 12);
         g.lineStyle(2, 0x0b1220, 0.7);
         g.strokeRoundedRect(1, 1, 76, 42, 11);
@@ -277,7 +295,7 @@
 
         // Bullet texture
         g.clear();
-        g.fillStyle(0xfbbf24, 1);
+        g.fillStyle(0xf59e0b, 1);
         g.fillRoundedRect(0, 0, 10, 18, 4);
         g.generateTexture("bullet", 10, 18);
 
@@ -293,50 +311,52 @@
 
         // Background gradient effect
         const bgGradient = this.add.graphics();
-        bgGradient.fillGradientStyle(0x1a1f3a, 0x0f172a, 0x1e293b, 0x0f172a);
+        bgGradient.fillGradientStyle(0x05070f, 0x0b1024, 0x140b2e, 0x05070f);
         bgGradient.fillRect(0, 0, w, h);
+
+        addStarfield(this, w, h, 170);
         
         // Title with glow effect
-        const title = this.add.text(w/2, h*0.18, "算数レーンシューティング", {
-          fontFamily: "system-ui, -apple-system, Segoe UI, Roboto, sans-serif",
+        const title = this.add.text(w/2, h*0.18, "MATH LANE SHOOTER", {
+          fontFamily: FONT_TITLE,
           fontSize: "36px",
-          color: "#06b6d4",
+          color: "#7dd3fc",
           fontStyle: "bold",
           align: "center",
           shadow: {
             offsetX: 0,
             offsetY: 0,
-            color: "#06b6d4",
-            blur: 15,
+            color: "#38bdf8",
+            blur: 18,
             stroke: true,
             fill: true
           }
         }).setOrigin(0.5);
         
         // Subtitle
-        const subtitle = this.add.text(w/2, h*0.24, "数学スキルを鍛えるシューティングゲーム", {
-          fontFamily: "system-ui, -apple-system, Segoe UI, Roboto, sans-serif",
+        const subtitle = this.add.text(w/2, h*0.24, "計算して、正しいレーンを撃ち抜け", {
+          fontFamily: FONT_UI,
           fontSize: "16px",
-          color: "#cbd5e1",
+          color: "#e2e8f0",
           fontStyle: "italic",
           align: "center"
         }).setOrigin(0.5);
 
         // Instructions panel
-        const panel = this.add.rectangle(w/2, h*0.48, w * 0.9, h * 0.35, 0x1a1f3a, 0.8);
-        panel.setStrokeStyle(2, 0x06b6d4, 0.3);
+        const panel = this.add.rectangle(w/2, h*0.48, w * 0.9, h * 0.35, 0x0b1024, 0.86);
+        panel.setStrokeStyle(2, 0x7dd3fc, 0.35);
         
-        const helpText = `🎯 4レーンに答えが流れてくる
-👆 スワイプ左右でレーン移動
-⚡ ダブルタップで移動＋発射（即判定）
-🎯 弾を撃たなくても、判定ライン到達時に自動判定
-✅ 正解に当たると+1点
-❌ 不正解 or 取り逃しでライフ-1（3で終了）
+        const helpText = `・4つのレーンに答えが落下
+・タップでレーン移動
+・左右スワイプでも移動
+・素早いダブルタップで発射
+・正解で+1、不正解でハート-1
+・見逃しでハート-1
 
-💡 ヒント：タップでも移動できます（楽な方でOK）`;
+STARTでゲーム開始`;
 
         this.add.text(w/2, h*0.48, helpText, {
-          fontFamily: "system-ui, -apple-system, Segoe UI, Roboto, sans-serif",
+          fontFamily: FONT_UI,
           fontSize: "16px",
           color: "#e5e7eb",
           align: "left",
@@ -345,10 +365,10 @@
 
         // Modern START button
         const btn = this.add.text(w/2, h*0.75, "START", {
-          fontFamily: "system-ui, -apple-system, Segoe UI, Roboto, sans-serif",
+          fontFamily: FONT_UI,
           fontSize: "28px",
           color: "#0b0f19",
-          backgroundColor: "#fbbf24",
+          backgroundColor: "#7dd3fc",
           padding: { left: 32, right: 32, top: 16, bottom: 16 },
           borderRadius: 16,
           fontStyle: "bold"
@@ -356,15 +376,15 @@
         
         // Button animations
         btn.on("pointerover", () => {
-          btn.setStyle({ backgroundColor: "#f59e0b", scale: 1.05 });
+          btn.setStyle({ backgroundColor: "#38bdf8", scale: 1.05 });
         });
         
         btn.on("pointerout", () => {
-          btn.setStyle({ backgroundColor: "#fbbf24", scale: 1 });
+          btn.setStyle({ backgroundColor: "#7dd3fc", scale: 1 });
         });
         
         btn.on("pointerdown", () => {
-          btn.setStyle({ backgroundColor: "#d97706", scale: 0.95 });
+          btn.setStyle({ backgroundColor: "#0ea5e9", scale: 0.95 });
         });
 
         const start = async () => {
@@ -438,28 +458,33 @@
       create() {
         const { width: w, height: h } = this.scale;
 
-        this.cameras.main.setBackgroundColor("#1a1f3a");
+        this.cameras.main.setBackgroundColor("#05070f");
+
+        const bg = this.add.graphics();
+        bg.fillGradientStyle(0x05070f, 0x0b1024, 0x1a103b, 0x05070f);
+        bg.fillRect(0, 0, w, h);
+        addStarfield(this, w, h, 140);
 
         // Lanes
         const laneW = w / 4;
         this.laneCenters = [0,1,2,3].map(i => (i + 0.5) * laneW);
 
         const lanesG = this.add.graphics();
-        lanesG.lineStyle(2, 0x334155, 0.8);
+        lanesG.lineStyle(2, 0x1f2a44, 0.8);
         for (let i = 1; i <= 3; i++) lanesG.lineBetween(i*laneW, 80, i*laneW, h);
-        lanesG.lineStyle(2, 0x1f2937, 1);
+        lanesG.lineStyle(2, 0x0f172a, 1);
         lanesG.lineBetween(0, 80, w, 80);
 
         // UI with modern styling
         this.questionText = this.add.text(w/2, 28, "", {
-          fontFamily: "system-ui, -apple-system, Segoe UI, Roboto, sans-serif",
+          fontFamily: FONT_TITLE,
           fontSize: "32px",
-          color: "#06b6d4",
+          color: "#7dd3fc",
           fontStyle: "bold",
           shadow: {
             offsetX: 0,
             offsetY: 0,
-            color: "#06b6d4",
+            color: "#38bdf8",
             blur: 10,
             stroke: true,
             fill: true
@@ -467,46 +492,46 @@
         }).setOrigin(0.5);
 
         // Score panel
-        const scorePanel = this.add.rectangle(80, 110, 140, 50, 0x1a1f3a, 0.8);
+        const scorePanel = this.add.rectangle(80, 110, 140, 50, 0x0b1024, 0.8);
         scorePanel.setStrokeStyle(2, 0xfbbf24, 0.5);
         
         this.scoreText = this.add.text(80, 110, "SCORE: 0", {
-          fontFamily: "system-ui, -apple-system, Segoe UI, Roboto, sans-serif",
+          fontFamily: FONT_UI,
           fontSize: "18px",
           color: "#fbbf24",
           fontStyle: "bold"
         }).setOrigin(0.5);
 
         // Lives panel
-        const livesPanel = this.add.rectangle(w - 80, 110, 100, 50, 0x1a1f3a, 0.8);
+        const livesPanel = this.add.rectangle(w - 80, 110, 100, 50, 0x0b1024, 0.8);
         livesPanel.setStrokeStyle(2, 0xef4444, 0.5);
         
-        this.livesText = this.add.text(w - 80, 110, "❤️❤️❤️", {
-          fontFamily: "system-ui, -apple-system, Segoe UI, Roboto, sans-serif",
-          fontSize: "20px"
-        }).setOrigin(0.5);
+        this.livesText = this.add.text(w - 80, 110, hearts(this.lives), {
+  fontFamily: FONT_UI,
+  fontSize: "20px"
+}).setOrigin(0.5);
 
         // Speed indicator panel
-        const speedPanel = this.add.rectangle(80, 160, 120, 40, 0x1a1f3a, 0.8);
-        speedPanel.setStrokeStyle(2, 0x10b981, 0.5);
+        const speedPanel = this.add.rectangle(80, 160, 120, 40, 0x0b1024, 0.8);
+        speedPanel.setStrokeStyle(2, 0x22d3ee, 0.5);
         
         this.speedText = this.add.text(80, 160, "SPEED: 0", {
-          fontFamily: "system-ui, -apple-system, Segoe UI, Roboto, sans-serif",
+          fontFamily: FONT_UI,
           fontSize: "14px",
-          color: "#10b981",
+          color: "#22d3ee",
           fontStyle: "bold"
         }).setOrigin(0.5);
 
         // Debug (helps verify lane/answer selection)
         this.debugText = this.add.text(14, h - 26, "", {
-          fontFamily: "system-ui, -apple-system, Segoe UI, Roboto, sans-serif",
+          fontFamily: FONT_UI,
           fontSize: "12px",
           color: "#64748b"
         });
 
         // Modern pause button
-        this.pauseBtn = this.add.text(w - 30, 35, "⏸", {
-          fontFamily: "system-ui, -apple-system, Segoe UI, Roboto, sans-serif",
+        this.pauseBtn = this.add.text(w - 30, 35, "II", {
+          fontFamily: FONT_UI,
           fontSize: "24px",
           color: "#e5e7eb",
           backgroundColor: "#1e293b",
@@ -556,12 +581,12 @@
         this.judgeLine = lineG;
         
         // Judge label with modern styling
-        this.judgeLabel = this.add.text(w - 20, this.judgeY - 20, "JUDGE LINE", {
-          fontFamily: "system-ui, -apple-system, Segoe UI, Roboto, sans-serif",
+        this.judgeLabel = this.add.text(w - 20, this.judgeY - 20, "LOCK LINE", {
+          fontFamily: FONT_UI,
           fontSize: "12px",
-          color: "#06b6d4",
+          color: "#7dd3fc",
           fontStyle: "bold",
-          backgroundColor: "#1a1f3a",
+          backgroundColor: "#05070f",
           padding: { left: 8, right: 8, top: 4, bottom: 4 },
           borderRadius: 4
         }).setOrigin(1, 0.5);
@@ -717,11 +742,11 @@
         if (isCorrect) {
           this.score += 1;
           SFX.play("correct");
-          this.flash("✔ 正解", 0x4ade80);
+          this.flash("CORRECT!", 0x4ade80);
         } else {
           this.lives -= 1;
           SFX.play("wrong");
-          this.flash("✘ まちがい", 0xf87171);
+          this.flash("WRONG!", 0xf87171);
         }
 
         this.time.delayedCall(420, () => this.newRound());
@@ -775,7 +800,7 @@
           if (s.body) s.body.setSize(96, 64, true);
 
           const t = this.add.text(s.x, s.y, String(value), {
-            fontFamily: "system-ui, -apple-system, Segoe UI, Roboto, sans-serif",
+            fontFamily: FONT_UI,
             fontSize: "22px",
             color: "#0b0f19"
           }).setOrigin(0.5);
@@ -801,12 +826,12 @@
         const { width: w, height: h } = this.scale;
         
         // Background panel for feedback
-        const panel = this.add.rectangle(w/2, h*0.35, w * 0.8, 80, 0x1a1f3a, 0.9);
+        const panel = this.add.rectangle(w/2, h*0.35, w * 0.8, 80, 0x0b1024, 0.9);
         panel.setStrokeStyle(3, color, 0.8);
         
         // Feedback text with glow effect
         const txt = this.add.text(w/2, h*0.35, label, {
-          fontFamily: "system-ui, -apple-system, Segoe UI, Roboto, sans-serif",
+          fontFamily: FONT_UI,
           fontSize: "36px",
           color: "#ffffff",
           fontStyle: "bold",
@@ -904,7 +929,7 @@
             this.clearChoices();
             this.lives -= 1;
             SFX.play("miss");
-            this.flash("取り逃し", 0xfbbf24);
+            this.flash("MISS!", 0xfbbf24);
             if (this.debugText) this.debugText.setText("MISS: choices passed bottom before selection");
             this.time.delayedCall(420, () => this.newRound());
           }
@@ -927,13 +952,13 @@
         this.add.rectangle(w/2, h/2, w, h, 0x000000, 0.55);
 
         this.add.text(w/2, h*0.32, "PAUSED", {
-          fontFamily: "system-ui, -apple-system, Segoe UI, Roboto, sans-serif",
+          fontFamily: FONT_UI,
           fontSize: "40px",
           color: "#e5e7eb"
         }).setOrigin(0.5);
 
         const resumeBtn = this.add.text(w/2, h*0.50, "RESUME", {
-          fontFamily: "system-ui, -apple-system, Segoe UI, Roboto, sans-serif",
+          fontFamily: FONT_UI,
           fontSize: "26px",
           color: "#0b0f19",
           backgroundColor: "#4ade80",
@@ -941,16 +966,17 @@
         }).setOrigin(0.5).setInteractive({ useHandCursor: true });
 
         const quitBtn = this.add.text(w/2, h*0.62, "QUIT", {
-          fontFamily: "system-ui, -apple-system, Segoe UI, Roboto, sans-serif",
+          fontFamily: FONT_UI,
           fontSize: "26px",
           color: "#0b0f19",
-          backgroundColor: "#fbbf24",
+          backgroundColor: "#7dd3fc",
           padding: { left: 22, right: 22, top: 10, bottom: 10 }
         }).setOrigin(0.5).setInteractive({ useHandCursor: true });
 
-        const pauseHelp = `途中でやめる：QUIT\n続ける：RESUME`;
+        const pauseHelp = `RESUMEで続行
+QUITでやめる`;
         this.add.text(w/2, h*0.76, pauseHelp, {
-          fontFamily: "system-ui, -apple-system, Segoe UI, Roboto, sans-serif",
+          fontFamily: FONT_UI,
           fontSize: "16px",
           color: "#cbd5e1",
           align: "center",
@@ -989,12 +1015,12 @@
         const overlay = this.add.rectangle(w/2, h/2, w, h, 0x0f172a, 0.8);
         
         // Panel background
-        const panel = this.add.rectangle(w/2, h/2, w * 0.85, h * 0.7, 0x1a1f3a, 0.9);
-        panel.setStrokeStyle(2, 0x06b6d4, 0.5);
+        const panel = this.add.rectangle(w/2, h/2, w * 0.85, h * 0.7, 0x0b1024, 0.9);
+        panel.setStrokeStyle(2, 0x7dd3fc, 0.5);
         
         // GAME OVER title with glow effect
         const title = this.add.text(w/2, h*0.25, "GAME OVER", {
-          fontFamily: "system-ui, -apple-system, Segoe UI, Roboto, sans-serif",
+          fontFamily: FONT_TITLE,
           fontSize: "48px",
           color: "#ef4444",
           fontStyle: "bold",
@@ -1010,7 +1036,7 @@
         
         // Score with animation
         const scoreText = this.add.text(w/2, h*0.42, `SCORE: ${this.finalScore}`, {
-          fontFamily: "system-ui, -apple-system, Segoe UI, Roboto, sans-serif",
+          fontFamily: FONT_UI,
           fontSize: "32px",
           color: "#fbbf24",
           fontStyle: "bold"
@@ -1029,25 +1055,25 @@
         
         // Modern retry button
         const btn = this.add.text(w/2, h*0.65, "RETRY", {
-          fontFamily: "system-ui, -apple-system, Segoe UI, Roboto, sans-serif",
+          fontFamily: FONT_UI,
           fontSize: "24px",
           color: "#0b0f19",
-          backgroundColor: "#06b6d4",
+          backgroundColor: "#7dd3fc",
           padding: { left: 24, right: 24, top: 14, bottom: 14 },
           borderRadius: 12
         }).setOrigin(0.5).setInteractive({ useHandCursor: true });
         
         // Button hover effects
         btn.on("pointerover", () => {
-          btn.setStyle({ backgroundColor: "#0891b2", scale: 1.05 });
+          btn.setStyle({ backgroundColor: "#38bdf8", scale: 1.05 });
         });
         
         btn.on("pointerout", () => {
-          btn.setStyle({ backgroundColor: "#06b6d4", scale: 1 });
+          btn.setStyle({ backgroundColor: "#7dd3fc", scale: 1 });
         });
         
         btn.on("pointerdown", () => {
-          btn.setStyle({ backgroundColor: "#0e7490", scale: 0.95 });
+          btn.setStyle({ backgroundColor: "#0ea5e9", scale: 0.95 });
         });
 
         const retry = () => this.scene.start("game", { score: 0, lives: 3 });
@@ -1055,8 +1081,8 @@
         this.input.once("pointerdown", retry);
 
         // Subtle hint text
-        this.add.text(w/2, h*0.80, "タップまたはクリックでリトライ", {
-          fontFamily: "system-ui, -apple-system, Segoe UI, Roboto, sans-serif",
+        this.add.text(w/2, h*0.80, "Tap to retry", {
+          fontFamily: FONT_UI,
           fontSize: "14px",
           color: "#64748b",
           fontStyle: "italic"
@@ -1090,7 +1116,7 @@
     const config = {
       type: Phaser.AUTO,
       parent: "game",
-      backgroundColor: "#1a1f3a",
+      backgroundColor: "#05070f",
       physics: {
         default: "arcade",
         arcade: { debug: false }
@@ -1108,3 +1134,37 @@
   </script>
 </body>
 </html>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
