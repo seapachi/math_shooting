@@ -281,38 +281,45 @@
       create() {
         const g = this.add.graphics();
 
-        // Player textures (two styles)
-        // Style A: sharp fighter
+        // Player textures (two realistic fighter silhouettes)
+        // Style A: interceptor (clean + sharp)
         g.clear();
-        g.fillStyle(0x7dd3fc, 1);
-        g.beginPath();
-        g.moveTo(32, 0);
-        g.lineTo(64, 26);
-        g.lineTo(32, 22);
-        g.lineTo(0, 26);
-        g.closePath();
-        g.fillPath();
-        g.fillStyle(0x0b1024, 1);
-        g.fillCircle(32, 14, 4);
-        g.generateTexture("player_sharp", 64, 28);
+        g.fillStyle(0xb6d6f4, 1);
+        g.fillTriangle(44, 2, 56, 30, 32, 30);              // nose + upper fuselage
+        g.fillRect(32, 26, 24, 18);                           // fuselage body
+        g.fillTriangle(8, 34, 32, 28, 32, 46);                // left wing
+        g.fillTriangle(80, 34, 56, 28, 56, 46);               // right wing
+        g.fillTriangle(28, 48, 36, 40, 36, 54);               // left tail fin
+        g.fillTriangle(60, 48, 52, 40, 52, 54);               // right tail fin
+        g.fillStyle(0x1d2b42, 1);
+        g.fillRoundedRect(40, 12, 8, 10, 3);                  // cockpit
+        g.fillStyle(0x6ea3cf, 1);
+        g.fillRect(40, 29, 8, 10);                            // intake stripe
+        g.fillStyle(0xe2e8f0, 0.75);
+        g.lineStyle(2, 0xffffff, 0.35);
+        g.strokeTriangle(44, 2, 56, 30, 32, 30);
+        g.generateTexture("player_sharp", 88, 56);
 
-        // Style B: flared thrusters
+        // Style B: strike fighter (heavier + engine glow)
         g.clear();
-        g.fillStyle(0x7dd3fc, 1);
-        g.beginPath();
-        g.moveTo(32, 0);
-        g.lineTo(60, 24);
-        g.lineTo(32, 20);
-        g.lineTo(4, 24);
-        g.closePath();
-        g.fillPath();
-        g.fillStyle(0xf472b6, 0.95);
-        g.fillTriangle(20, 24, 28, 24, 24, 34);
-        g.fillTriangle(36, 24, 44, 24, 40, 34);
-        g.fillStyle(0xfbbf24, 0.9);
-        g.fillCircle(24, 30, 3);
-        g.fillCircle(40, 30, 3);
-        g.generateTexture("player_flare", 64, 36);
+        g.fillStyle(0x9fb7cf, 1);
+        g.fillTriangle(44, 3, 58, 30, 30, 30);                // nose
+        g.fillRoundedRect(31, 24, 26, 24, 5);                 // heavy fuselage
+        g.fillTriangle(6, 36, 31, 30, 31, 50);                // left wing
+        g.fillTriangle(82, 36, 57, 30, 57, 50);               // right wing
+        g.fillTriangle(22, 50, 33, 42, 33, 56);               // tail stabilizer L
+        g.fillTriangle(66, 50, 55, 42, 55, 56);               // tail stabilizer R
+        g.fillStyle(0x172238, 1);
+        g.fillRoundedRect(40, 12, 8, 11, 3);                  // cockpit
+        g.fillStyle(0xf59e0b, 0.95);
+        g.fillCircle(38, 49, 3);                              // engine nozzle L
+        g.fillCircle(50, 49, 3);                              // engine nozzle R
+        g.fillStyle(0x7dd3fc, 0.45);
+        g.fillTriangle(35, 52, 41, 52, 38, 60);               // flame L
+        g.fillTriangle(47, 52, 53, 52, 50, 60);               // flame R
+        g.lineStyle(2, 0xffffff, 0.25);
+        g.strokeRoundedRect(31, 24, 26, 24, 5);
+        g.generateTexture("player_flare", 88, 62);
 
         // Choice texture
         g.clear();
@@ -374,16 +381,16 @@
         // Ship style toggle
         const shipLabel = this.add.text(w/2, h*0.30, "", {
           fontFamily: FONT_UI,
-          fontSize: "14px",
-          color: "#94a3b8",
-          backgroundColor: "#0b1024",
-          padding: { left: 10, right: 10, top: 6, bottom: 6 },
+          fontSize: "15px",
+          color: "#dbeafe",
+          backgroundColor: "#16233f",
+          padding: { left: 12, right: 12, top: 7, bottom: 7 },
           borderRadius: 10
         }).setOrigin(0.5).setInteractive({ useHandCursor: true });
         shipLabel.setDepth(10);
 
         const updateShipLabel = () => {
-          shipLabel.setText(`SHIP: ${currentShip.toUpperCase()} (TAP TO SWITCH)`);
+          shipLabel.setText(`SHIP: ${currentShip.toUpperCase()} [TAP TO SWITCH]`);
         };
         updateShipLabel();
         shipLabel.on("pointerdown", () => {
@@ -443,7 +450,6 @@ STARTでゲーム開始`;
           this.scene.start("game", { score: 0, lives: 3, ship: currentShip });
         };
         btn.on("pointerdown", start);
-        this.input.once("pointerdown", start);
         
         // Floating animation for title
         this.tweens.add({
@@ -759,7 +765,7 @@ STARTでゲーム開始`;
 
         const { height: h } = this.scale;
         const x = this.laneCenters[targetLane];
-        const startY = (this.player?.y ?? (h - 70)) - 22;
+        const startY = (this.player?.y ?? (h - 70)) - ((this.player?.displayHeight ?? 52) * 0.42);
 
         const choice = this.choiceSprites[targetLane];
         const targetY = choice?.y ?? 120;
