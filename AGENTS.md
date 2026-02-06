@@ -4,10 +4,11 @@
 このリポジトリでのAI作業ルールと制約を定義する。
 
 ## 必須ドキュメント
-- 変更を加えたら `EXPLANATION.md` を更新し、プロジェクト全体を平易な日本語で説明する。
+- ソースコードに変更を加えるたびに、必ず `EXPLANATION.md` を更新する。
+- `EXPLANATION.md` には、プロジェクト全体を平易な日本語で説明する。
 
 ## 作業範囲
-- 変更して良い: `index.html`, `styles.css`, `EXPLANATION.md`, `AGENTS.md`
+- 変更して良い: `index.html`, `styles.css`, `EXPLANATION.md`, `README.md`, `AGENTS.md`
 - 変更しない: ビルド成果物、`node_modules/`、生成物
 
 ## コーディング規約
