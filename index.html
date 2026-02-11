@@ -323,10 +323,10 @@
 
         // Choice texture
         g.clear();
-        g.fillStyle(0x8b5cf6, 1);
-        g.fillRoundedRect(0, 0, 78, 44, 12);
-        g.lineStyle(2, 0x0b1220, 0.7);
-        g.strokeRoundedRect(1, 1, 76, 42, 11);
+        g.lineStyle(3, 0x8b5cf6, 0.95);
+        g.strokeRoundedRect(2, 2, 74, 40, 11);
+        g.lineStyle(1, 0xffffff, 0.45);
+        g.strokeRoundedRect(5, 5, 68, 34, 9);
         g.generateTexture("choice", 78, 44);
 
         // Bullet texture
@@ -859,9 +859,11 @@ STARTでゲーム開始`;
           if (s.body) s.body.setSize(96, 64, true);
 
           const t = this.add.text(s.x, s.y, String(value), {
-            fontFamily: FONT_UI,
+            fontFamily: FONT_TITLE,
             fontSize: "22px",
-            color: "#0b0f19"
+            color: "#f8fafc",
+            stroke: "#0b1024",
+            strokeThickness: 3
           }).setOrigin(0.5);
 
           this.choiceSprites.push(s);
