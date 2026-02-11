@@ -10,7 +10,7 @@
   
   /* Accent colors */
   --accent-cyan: #7dd3fc;
-  --accent-magenta: #4CC9FF;
+  --accent-magenta: #8B5CF6;
   --accent-orange: #f97316;
   --accent-green: #22d3ee;
   --accent-red: #ef4444;
@@ -25,7 +25,7 @@
   
   /* Game colors */
   --player-color: #22d3ee;
-  --choice-color: #4CC9FF;
+  --choice-color: #8B5CF6;
   --bullet-color: #f59e0b;
   --lane-color: #1f2a44;
   --judge-color: #94a3b8;
