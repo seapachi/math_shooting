@@ -21,6 +21,7 @@
     const FONT_UI = '"Space Grotesk", sans-serif';
     const SHIP_STYLES = ["sharp", "flare"];
     let currentShip = "sharp";
+    let currentMode = "sub";
 
     function shuffle(arr) {
       for (let i = arr.length - 1; i > 0; i--) {
@@ -44,7 +45,12 @@
       return g;
     }
 
-    function makeQuestion() {
+    function makeQuestion(mode = "sub") {
+      if (mode === "mul") return makeMulQuestion();
+      return makeSubQuestion();
+    }
+
+    function makeSubQuestion() {
       const a = randInt(0, 20);
       const b = randInt(0, a);
       const correct = a - b;
@@ -64,6 +70,38 @@
 
       const choices = shuffle([...set]);
       return { text: `${a} - ${b}`, correct, choices };
+    }
+
+    function makeMulQuestion() {
+      const a = randInt(1, 9);
+      const b = randInt(1, 9);
+      const correct = a * b;
+
+      const set = new Set([correct]);
+      const deltas = shuffle([-3, -2, -1, +1, +2, +3]);
+      const near = deltas
+        .map(d => correct + d)
+        .filter(v => v >= 1 && v <= 81);
+
+      const tableCandidates = [
+        a * (b - 1), a * (b + 1),
+        a * (b - 2), a * (b + 2),
+        b * (a - 1), b * (a + 1),
+        b * (a - 2), b * (a + 2)
+      ].filter(v => v >= 1 && v <= 81);
+
+      const candidates = shuffle([...near, ...tableCandidates]);
+      for (const v of candidates) {
+        if (set.size >= 4) break;
+        set.add(v);
+      }
+
+      while (set.size < 4) {
+        set.add(randInt(1, 81));
+      }
+
+      const choices = shuffle([...set]);
+      return { text: `${a} × ${b}`, correct, choices };
     }
 
     function hearts(n) {
@@ -239,39 +277,54 @@
     // ===== Tiny self-tests (console) =====
     // Lightweight sanity checks to catch accidental regressions.
     (function runSelfTests() {
-      for (let i = 0; i < 80; i++) {
-        const q = makeQuestion();
-        console.assert(typeof q.text === "string" && q.text.includes("-"), "Question text format");
-        console.assert(Number.isInteger(q.correct) && q.correct >= 0 && q.correct <= 20, "Correct range");
-        console.assert(Array.isArray(q.choices) && q.choices.length === 4, "Choices length 4");
+      const modes = ["sub", "mul"];
+      for (const mode of modes) {
+        for (let i = 0; i < 40; i++) {
+          const q = makeQuestion(mode);
+          console.assert(typeof q.text === "string", "Question text format");
+          console.assert(Array.isArray(q.choices) && q.choices.length === 4, "Choices length 4");
 
-        const uniq = new Set(q.choices);
-        console.assert(uniq.size === 4, "Choices are unique");
-        console.assert(uniq.has(q.correct), "Choices include correct");
+          const uniq = new Set(q.choices);
+          console.assert(uniq.size === 4, "Choices are unique");
+          console.assert(uniq.has(q.correct), "Choices include correct");
 
-        for (const c of q.choices) {
-          console.assert(Number.isInteger(c) && c >= 0 && c <= 20, "Choice range");
+          if (mode === "sub") {
+            console.assert(Number.isInteger(q.correct) && q.correct >= 0 && q.correct <= 20, "Correct range (sub)");
+            for (const c of q.choices) {
+              console.assert(Number.isInteger(c) && c >= 0 && c <= 20, "Choice range (sub)");
+            }
+            const m = q.text.match(/^\s*(\d+)\s*-\s*(\d+)\s*$/);
+            console.assert(!!m, "Question text parseable (sub)");
+            if (m) {
+              const a = Number(m[1]);
+              const b = Number(m[2]);
+              console.assert(a >= 0 && a <= 20, "Parsed a range (sub)");
+              console.assert(b >= 0 && b <= a, "Parsed b range (sub)");
+              console.assert(a - b === q.correct, "Parsed correct matches (sub)");
+            }
+          } else {
+            console.assert(Number.isInteger(q.correct) && q.correct >= 1 && q.correct <= 81, "Correct range (mul)");
+            for (const c of q.choices) {
+              console.assert(Number.isInteger(c) && c >= 1 && c <= 81, "Choice range (mul)");
+            }
+            const m = q.text.match(/^\s*(\d+)\s*×\s*(\d+)\s*$/);
+            console.assert(!!m, "Question text parseable (mul)");
+            if (m) {
+              const a = Number(m[1]);
+              const b = Number(m[2]);
+              console.assert(a >= 1 && a <= 9, "Parsed a range (mul)");
+              console.assert(b >= 1 && b <= 9, "Parsed b range (mul)");
+              console.assert(a * b === q.correct, "Parsed correct matches (mul)");
+            }
+          }
+
+          const sorted = [...q.choices].slice().sort((x, y) => x - y).join(",");
+          console.assert(q.choices.join(",") !== sorted || i < 3, "Choices appear shuffled (smoke)");
+
+          const idx = q.choices.indexOf(q.correct);
+          console.assert(idx >= 0 && idx < 4, "Correct value has a lane index");
+          console.assert(q.choices[idx] === q.correct, "Lane index maps to correct value");
         }
-
-        // Parse test: ensure text matches correct
-        const m = q.text.match(/^\s*(\d+)\s*-\s*(\d+)\s*$/);
-        console.assert(!!m, "Question text parseable");
-        if (m) {
-          const a = Number(m[1]);
-          const b = Number(m[2]);
-          console.assert(a >= 0 && a <= 20, "Parsed a range");
-          console.assert(b >= 0 && b <= a, "Parsed b range");
-          console.assert(a - b === q.correct, "Parsed correct matches");
-        }
-
-        // Extra test: choices shouldn't be strictly sorted (basic randomness smoke test)
-        const sorted = [...q.choices].slice().sort((x, y) => x - y).join(",");
-        console.assert(q.choices.join(",") !== sorted || i < 3, "Choices appear shuffled (smoke)");
-
-        // Lane mapping test: the lane index of the correct value should map back to correct.
-        const idx = q.choices.indexOf(q.correct);
-        console.assert(idx >= 0 && idx < 4, "Correct value has a lane index");
-        console.assert(q.choices[idx] === q.correct, "Lane index maps to correct value");
       }
     })();
 
@@ -400,6 +453,62 @@
           updateShipLabel();
         });
 
+        // Mode segmented control
+        const modeWrap = this.add.container(w/2, h*0.36);
+        modeWrap.setDepth(10);
+        const modeBg = this.add.rectangle(0, 0, 220, 40, 0x0b1024, 0.85);
+        modeBg.setStrokeStyle(2, 0x7dd3fc, 0.35);
+
+        const subBtn = this.add.rectangle(-55, 0, 100, 28, 0x0b1024, 0.9);
+        const mulBtn = this.add.rectangle(55, 0, 100, 28, 0x0b1024, 0.9);
+        subBtn.setInteractive({ useHandCursor: true });
+        mulBtn.setInteractive({ useHandCursor: true });
+
+        const subText = this.add.text(-55, 0, "引き算", {
+          fontFamily: FONT_UI,
+          fontSize: "14px",
+          color: "#e2e8f0",
+          fontStyle: "bold"
+        }).setOrigin(0.5);
+
+        const mulText = this.add.text(55, 0, "掛け算", {
+          fontFamily: FONT_UI,
+          fontSize: "14px",
+          color: "#e2e8f0",
+          fontStyle: "bold"
+        }).setOrigin(0.5);
+
+        const updateMode = () => {
+          const onColor = 0x7dd3fc;
+          const offColor = 0x0b1024;
+          const onText = "#0b1024";
+          const offText = "#e2e8f0";
+          if (currentMode === "sub") {
+            subBtn.fillColor = onColor;
+            mulBtn.fillColor = offColor;
+            subText.setColor(onText);
+            mulText.setColor(offText);
+          } else {
+            subBtn.fillColor = offColor;
+            mulBtn.fillColor = onColor;
+            subText.setColor(offText);
+            mulText.setColor(onText);
+          }
+        };
+
+        const setMode = (mode) => {
+          currentMode = mode;
+          SFX.play("ui");
+          updateMode();
+        };
+        subBtn.on("pointerdown", () => setMode("sub"));
+        mulBtn.on("pointerdown", () => setMode("mul"));
+        subText.setInteractive({ useHandCursor: true }).on("pointerdown", () => setMode("sub"));
+        mulText.setInteractive({ useHandCursor: true }).on("pointerdown", () => setMode("mul"));
+
+        modeWrap.add([modeBg, subBtn, mulBtn, subText, mulText]);
+        updateMode();
+
         // Instructions panel
         const panel = this.add.rectangle(w/2, h*0.48, w * 0.9, h * 0.35, 0x0b1024, 0.86);
         panel.setStrokeStyle(2, 0x7dd3fc, 0.35);
@@ -448,7 +557,7 @@ STARTでゲーム開始`;
         const start = async () => {
           await SFX.resume();
           SFX.play("ui");
-          this.scene.start("game", { score: 0, lives: 3, ship: currentShip });
+          this.scene.start("game", { score: 0, lives: 3, ship: currentShip, mode: currentMode });
         };
         btn.on("pointerdown", start);
         
@@ -482,6 +591,7 @@ STARTでゲーム開始`;
         this.laneCenters = [];
         this.player = null;
         this.ship = "sharp";
+        this.mode = "sub";
         this.choiceSprites = [];
         this.choiceTexts = [];
         this.roundActive = false;
@@ -503,6 +613,7 @@ STARTでゲーム開始`;
         this.score = data?.score ?? 0;
         this.lives = data?.lives ?? 3;
         this.ship = data?.ship ?? currentShip;
+        this.mode = data?.mode ?? currentMode;
         this.roundCount = 0;
         this.currentSpeed = 0;
         this.isPaused = false;
@@ -833,7 +944,7 @@ STARTでゲーム開始`;
         if (this.bullets) this.bullets.clear(true, true);
         this.clearChoices();
 
-        this.question = makeQuestion();
+        this.question = makeQuestion(this.mode);
         this.questionText.setText(this.question.text);
         this.scoreText.setText(`SCORE: ${this.score}`);
         this.livesText.setText(hearts(this.lives));
