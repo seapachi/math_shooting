@@ -210,3 +210,5 @@
 - eference/font-size-compare.html を追加し、問題文と敵数字のサイズ比較（敵のMAX SAFE自動算出付き）ができるようにしました。
 - eference/font-size-compare.html の敵数字サンプル文字が見えにくい問題を修正し、文字色・ストローク・影を調整しました。
 - eference/font-compare.html にゲーム採用フォント（Rajdhani）を明示し、比較カードでも現在採用フォントをハイライト表示するようにしました。
+- index.html に足し算モードを追加し、スタート画面のモード選択を「足し算 / 引き算 / 掛け算」の3種類に拡張しました。
+- index.html の足し算モード出題範囲を 0〜9 + 0〜9（正解 0〜18）に変更しました。

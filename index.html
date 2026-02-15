@@ -47,8 +47,31 @@
     }
 
     function makeQuestion(mode = "sub") {
+      if (mode === "add") return makeAddQuestion();
       if (mode === "mul") return makeMulQuestion();
       return makeSubQuestion();
+    }
+
+    function makeAddQuestion() {
+      const a = randInt(0, 9);
+      const b = randInt(0, 9);
+      const correct = a + b;
+
+      const set = new Set([correct]);
+      const deltas = shuffle([-2, -1, +1, +2, -3, +3]);
+
+      for (const d of deltas) {
+        if (set.size >= 4) break;
+        const v = correct + d;
+        if (v >= 0 && v <= 18) set.add(v);
+      }
+
+      while (set.size < 4) {
+        set.add(randInt(0, 18));
+      }
+
+      const choices = shuffle([...set]);
+      return { text: `${a} + ${b}`, correct, choices };
     }
 
     function makeSubQuestion() {
@@ -278,7 +301,7 @@
     // ===== Tiny self-tests (console) =====
     // Lightweight sanity checks to catch accidental regressions.
     (function runSelfTests() {
-      const modes = ["sub", "mul"];
+      const modes = ["add", "sub", "mul"];
       for (const mode of modes) {
         for (let i = 0; i < 40; i++) {
           const q = makeQuestion(mode);
@@ -289,7 +312,21 @@
           console.assert(uniq.size === 4, "Choices are unique");
           console.assert(uniq.has(q.correct), "Choices include correct");
 
-          if (mode === "sub") {
+          if (mode === "add") {
+            console.assert(Number.isInteger(q.correct) && q.correct >= 0 && q.correct <= 18, "Correct range (add)");
+            for (const c of q.choices) {
+              console.assert(Number.isInteger(c) && c >= 0 && c <= 18, "Choice range (add)");
+            }
+            const m = q.text.match(/^\s*(\d+)\s*\+\s*(\d+)\s*$/);
+            console.assert(!!m, "Question text parseable (add)");
+            if (m) {
+              const a = Number(m[1]);
+              const b = Number(m[2]);
+              console.assert(a >= 0 && a <= 9, "Parsed a range (add)");
+              console.assert(b >= 0 && b <= 9, "Parsed b range (add)");
+              console.assert(a + b === q.correct, "Parsed correct matches (add)");
+            }
+          } else if (mode === "sub") {
             console.assert(Number.isInteger(q.correct) && q.correct >= 0 && q.correct <= 20, "Correct range (sub)");
             for (const c of q.choices) {
               console.assert(Number.isInteger(c) && c >= 0 && c <= 20, "Choice range (sub)");
@@ -457,22 +494,31 @@
         // Mode segmented control
         const modeWrap = this.add.container(w/2, h*0.36);
         modeWrap.setDepth(10);
-        const modeBg = this.add.rectangle(0, 0, 220, 40, 0x0b1024, 0.85);
+        const modeBg = this.add.rectangle(0, 0, 336, 40, 0x0b1024, 0.85);
         modeBg.setStrokeStyle(2, 0x7dd3fc, 0.35);
 
-        const subBtn = this.add.rectangle(-55, 0, 100, 28, 0x0b1024, 0.9);
-        const mulBtn = this.add.rectangle(55, 0, 100, 28, 0x0b1024, 0.9);
+        const addBtn = this.add.rectangle(-112, 0, 104, 28, 0x0b1024, 0.9);
+        const subBtn = this.add.rectangle(0, 0, 104, 28, 0x0b1024, 0.9);
+        const mulBtn = this.add.rectangle(112, 0, 104, 28, 0x0b1024, 0.9);
+        addBtn.setInteractive({ useHandCursor: true });
         subBtn.setInteractive({ useHandCursor: true });
         mulBtn.setInteractive({ useHandCursor: true });
 
-        const subText = this.add.text(-55, 0, "引き算", {
+        const addText = this.add.text(-112, 0, "足し算", {
           fontFamily: FONT_UI,
           fontSize: "14px",
           color: "#e2e8f0",
           fontStyle: "bold"
         }).setOrigin(0.5);
 
-        const mulText = this.add.text(55, 0, "掛け算", {
+        const subText = this.add.text(0, 0, "引き算", {
+          fontFamily: FONT_UI,
+          fontSize: "14px",
+          color: "#e2e8f0",
+          fontStyle: "bold"
+        }).setOrigin(0.5);
+
+        const mulText = this.add.text(112, 0, "掛け算", {
           fontFamily: FONT_UI,
           fontSize: "14px",
           color: "#e2e8f0",
@@ -484,14 +530,25 @@
           const offColor = 0x0b1024;
           const onText = "#0b1024";
           const offText = "#e2e8f0";
-          if (currentMode === "sub") {
+          if (currentMode === "add") {
+            addBtn.fillColor = onColor;
+            subBtn.fillColor = offColor;
+            mulBtn.fillColor = offColor;
+            addText.setColor(onText);
+            subText.setColor(offText);
+            mulText.setColor(offText);
+          } else if (currentMode === "sub") {
+            addBtn.fillColor = offColor;
             subBtn.fillColor = onColor;
             mulBtn.fillColor = offColor;
+            addText.setColor(offText);
             subText.setColor(onText);
             mulText.setColor(offText);
           } else {
+            addBtn.fillColor = offColor;
             subBtn.fillColor = offColor;
             mulBtn.fillColor = onColor;
+            addText.setColor(offText);
             subText.setColor(offText);
             mulText.setColor(onText);
           }
@@ -502,12 +559,14 @@
           SFX.play("ui");
           updateMode();
         };
+        addBtn.on("pointerdown", () => setMode("add"));
         subBtn.on("pointerdown", () => setMode("sub"));
         mulBtn.on("pointerdown", () => setMode("mul"));
+        addText.setInteractive({ useHandCursor: true }).on("pointerdown", () => setMode("add"));
         subText.setInteractive({ useHandCursor: true }).on("pointerdown", () => setMode("sub"));
         mulText.setInteractive({ useHandCursor: true }).on("pointerdown", () => setMode("mul"));
 
-        modeWrap.add([modeBg, subBtn, mulBtn, subText, mulText]);
+        modeWrap.add([modeBg, addBtn, subBtn, mulBtn, addText, subText, mulText]);
         updateMode();
 
         // Instructions panel
