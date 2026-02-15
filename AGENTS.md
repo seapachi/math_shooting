@@ -25,3 +25,27 @@
 ## 注意事項
 - 機密情報やAPIキーは追加しない。
 - 外部ネットワークアクセスが必要な場合は事前に相談する。
+
+## 文字コードルール（重要）
+- テキストファイルは必ず UTF-8 で保存する（BOMなし推奨）。
+- `Shift_JIS / CP932 / UTF-16` で保存しない。
+- 対象: `*.html`, `*.css`, `*.md`, `*.js`, `*.json`
+- 文字化けしている状態でコミットしない。
+- GitHub Pages で `invalid characters for the used encoding UTF-8` が出た場合は、該当ファイルをUTF-8で再保存して再デプロイする。
+
+## 事前チェック（推奨）
+PowerShell でコミット前に実行:
+
+```powershell
+$bad=@()
+foreach($f in (git ls-files)){
+  $bytes=[System.IO.File]::ReadAllBytes((Resolve-Path $f))
+  try{
+    $enc=[System.Text.UTF8Encoding]::new($false,$true)
+    $null=$enc.GetString($bytes)
+  } catch {
+    $bad += $f
+  }
+}
+if($bad.Count){ "Non-UTF8 files:"; $bad } else { "All tracked files are valid UTF-8." }
+```
