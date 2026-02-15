@@ -667,6 +667,7 @@ STARTでゲーム開始`;
         this.lastTapX = 0;
         this.lastTapY = 0;
         this.question = null;
+        this.area23Y = 0;
       }
 
       init(data) {
@@ -683,6 +684,7 @@ STARTでゲーム開始`;
         this.lastTapLane = -1;
         this.lastTapX = 0;
         this.lastTapY = 0;
+        this.area23Y = 0;
       }
 
       create() {
@@ -708,15 +710,17 @@ STARTでゲーム開始`;
         // UI with modern styling
         this.questionText = this.add.text(w/2, 28, "", {
           fontFamily: FONT_ENEMY,
-          fontSize: "32px",
+          fontSize: "38px",
           color: "#7dd3fc",
+          stroke: "#0b1024",
+          strokeThickness: 2,
           fontStyle: "bold",
           shadow: {
             offsetX: 0,
             offsetY: 0,
             color: "#38bdf8",
-            blur: 10,
-            stroke: true,
+            blur: 12,
+            stroke: false,
             fill: true
           }
         }).setOrigin(0.5);
@@ -796,19 +800,17 @@ STARTでゲーム開始`;
         this.player.setImmovable(true);
         this.player.body.allowGravity = false;
 
-        // Modern judge line with glow effect
+        // Score zones (Area3/Area2/Area1) boundary lines
         this.judgeY = h - 95;
+        this.area23Y = this.judgeY / 2;
         const lineG = this.add.graphics();
-        
-        // Glow effect for judge line
-        lineG.lineStyle(4, 0x06b6d4, 0.3);
+
+        // Thin boundary lines (no glow)
+        lineG.lineStyle(2, 0x06b6d4, 0.45);
+        lineG.lineBetween(0, this.area23Y, w, this.area23Y);
         lineG.lineBetween(0, this.judgeY, w, this.judgeY);
-        
-        // Main judge line
-        lineG.lineStyle(2, 0x06b6d4, 0.8);
-        lineG.lineBetween(0, this.judgeY, w, this.judgeY);
-        
-        // Animated judge line
+
+        // Keep reference for future updates
         this.judgeLine = lineG;
         
         // Judge label with modern styling
@@ -926,6 +928,17 @@ STARTでゲーム開始`;
         this.choiceTexts = [];
       }
 
+      getAreaByImpactY(impactY) {
+        if (!Number.isFinite(impactY)) return 1;
+        if (impactY < this.area23Y) return 3;
+        if (impactY < this.judgeY) return 2;
+        return 1;
+      }
+
+      getScoreByImpactArea(impactY) {
+        return this.getAreaByImpactY(impactY);
+      }
+
       shootAtLane(targetLane) {
         // Double-tap selection should NEVER be counted as "miss".
         if (this.roundFinished || this.isPaused || !this.bullets) return;
@@ -960,20 +973,23 @@ STARTでゲーム開始`;
             // Decide correctness from the round data (stable even if sprites are destroyed)
             const chosenValue = this.question?.choices?.[targetLane];
             const isCorrect = (chosenValue === this.question?.correct);
-            this.finishRound(isCorrect);
+            this.finishRound(isCorrect, targetY);
           }
         });
       }
 
       // Called after a shot OR collision; always progresses to next question.
-      finishRound(isCorrect) {
+      finishRound(isCorrect, impactY = null, forcedScore = null) {
         if (this.bullets) this.bullets.clear(true, true);
         this.clearChoices();
 
         if (isCorrect) {
-          this.score += 1;
+          let plus = Number.isFinite(forcedScore) ? forcedScore : this.getScoreByImpactArea(impactY);
+          plus = Phaser.Math.Clamp(Math.round(plus), 1, 3);
+          this.score += plus;
           SFX.play("correct");
-          this.flash("CORRECT!", 0x4ade80);
+          const correctLabel = plus === 1 ? "CORRECT" : `CORRECT +${plus}`;
+          this.flash(correctLabel, 0x4ade80);
         } else {
           this.lives -= 1;
           SFX.play("wrong");
@@ -984,11 +1000,11 @@ STARTでゲーム開始`;
       }
 
       // Back-compat: bullet overlap can still call this.
-      resolveChoiceHit(isCorrect) {
+      resolveChoiceHit(isCorrect, impactY = null) {
         if (this.roundFinished) return;
         this.roundFinished = true;
         this.roundActive = false;
-        this.finishRound(!!isCorrect);
+        this.finishRound(!!isCorrect, impactY);
       }
 
       newRound() {
@@ -1032,10 +1048,18 @@ STARTでゲーム開始`;
 
           const t = this.add.text(s.x, s.y, String(value), {
             fontFamily: FONT_ENEMY,
-            fontSize: "24px",
+            fontSize: "28px",
             color: "#fbbf24",
             stroke: "#0b1024",
-            strokeThickness: 3,
+            strokeThickness: 2,
+            shadow: {
+              offsetX: 0,
+              offsetY: 1,
+              color: "#0b1024",
+              blur: 6,
+              stroke: false,
+              fill: true
+            },
             fontStyle: "bold"
           }).setOrigin(0.5);
 
@@ -1047,7 +1071,7 @@ STARTでゲーム開始`;
             // If the round is already being resolved (e.g., via shootAtLane), ignore overlaps.
             if (this.roundFinished) return;
             bullet.destroy();
-            this.resolveChoiceHit(choice.data.get("correct"));
+            this.resolveChoiceHit(choice.data.get("correct"), choice.y);
           });
         }
 
@@ -1109,7 +1133,7 @@ STARTでゲーム開始`;
         this.livesText.setText(hearts(this.lives));
         
         // Pulse effect on score/lives panels
-        if (label.includes("正解")) {
+        if (label.includes("CORRECT")) {
           this.tweens.add({
             targets: this.scoreText,
             scaleX: 1.2,
@@ -1118,7 +1142,7 @@ STARTでゲーム開始`;
             ease: "Sine.easeOut",
             yoyo: true
           });
-        } else if (label.includes("まちがい") || label.includes("取り逃し")) {
+        } else if (label.includes("WRONG") || label.includes("MISS")) {
           this.tweens.add({
             targets: this.livesText,
             scaleX: 1.2,
@@ -1149,7 +1173,8 @@ STARTでゲーム開始`;
             const isCorrect = (chosenValue === this.question?.correct);
             if (this.debugText) this.debugText.setText(`AUTO lane=${this.lane+1} value=${chosenValue} correct=${this.question?.correct} -> ${isCorrect ? "OK" : "NG"}`);
 
-            this.finishRound(isCorrect);
+            if (isCorrect) this.finishRound(true, null, 1);
+            else this.finishRound(false);
           }
         }
 
