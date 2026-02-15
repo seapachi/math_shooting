@@ -85,6 +85,23 @@
 - `styles.css`
   - ページ背景、枠、グロー、全体トーン
 
+### iOS Chrome の表示差分対策（上下見切れ防止）
+iPhone の Chrome は、アドレスバーやツールバーの表示状態で「見えている高さ」が変わることがあります。  
+この差分で `100vh` が実画面とずれると、上下が欠けて見える場合があります。
+
+このプロジェクトでは、次の方法で高さを同期しています。
+
+- `styles.css`
+  - `:root` に `--app-height` を用意
+  - `#game` は `height: 100vh;` の後に `height: var(--app-height);` を指定
+- `index.html`
+  - `syncAppHeight()` で `window.visualViewport?.height` を優先取得（未対応時は `window.innerHeight`）
+  - 取得した高さを `--app-height` に反映
+  - 高さ更新後に `game.scale.refresh()` を呼んで、Phaser の `FIT` レイアウトを再計算
+  - `resize` / `orientationchange`（必要に応じて `visualViewport` の `resize` / `scroll`）で再同期
+
+この変更はレイアウト制御のみで、得点・ライフ・入力操作などのゲームルールは変更していません。
+
 ### フォントの見やすさ改善
 `GameScene` 内の表示を次のように調整しています。
 

@@ -2,6 +2,8 @@
 
 /* CSS Variables for consistent theming */
 :root {
+  --app-height: 100vh;
+
   /* Background colors */
   --bg-primary: #05070f;
   --bg-secondary: #0b1024;
@@ -70,6 +72,7 @@ html, body {
 #game {
   width: 100vw;
   height: 100vh;
+  height: var(--app-height);
   touch-action: none;
   position: relative;
 }

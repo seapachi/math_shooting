@@ -11,6 +11,8 @@
 | T5 | エリア着弾ベース得点への置換 | 完了 | `index.html`, `PLAN.md` | 時間加点を削除し、Area3/2/1=3/2/1点へ変更 |
 | T6 | エリア境界線・表示文言調整 | 完了 | `index.html`, `PLAN.md` | lockline基準の2本線、CORRECT表示ルール反映 |
 | T7 | 説明ドキュメント更新（得点仕様差し替え） | 完了 | `EXPLANATION.md`, `PLAN.md` | 早押し説明をエリア得点仕様へ差し替え |
+| T8 | iOS Chrome の viewport 高さ追従対応 | 完了 | `index.html`, `styles.css`, `PLAN.md` | `visualViewport` と `--app-height` で見切れを防止 |
+| T9 | 説明ドキュメント更新（viewport対応） | 完了 | `EXPLANATION.md`, `PLAN.md` | 高さ同期と `scale.refresh()` の説明を追記 |
 
 ## 運用メモ
 - 状態は `未着手 / 進行中 / 完了 / 保留` を使う。

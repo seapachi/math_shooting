@@ -1371,6 +1371,43 @@ QUITでやめる`;
       }
     }
 
+    let activeGame = null;
+    let appHeightSyncRaf = 0;
+
+    function applyAppHeight() {
+      const viewportHeight = window.visualViewport ? window.visualViewport.height : window.innerHeight;
+      if (!viewportHeight) return;
+      const nextHeight = Math.round(viewportHeight);
+      document.documentElement.style.setProperty("--app-height", `${nextHeight}px`);
+      if (activeGame?.scale) {
+        activeGame.scale.refresh();
+      }
+    }
+
+    function syncAppHeight(immediate = false) {
+      if (immediate) {
+        if (appHeightSyncRaf) {
+          window.cancelAnimationFrame(appHeightSyncRaf);
+          appHeightSyncRaf = 0;
+        }
+        applyAppHeight();
+        return;
+      }
+
+      if (appHeightSyncRaf) return;
+      appHeightSyncRaf = window.requestAnimationFrame(() => {
+        appHeightSyncRaf = 0;
+        applyAppHeight();
+      });
+    }
+
+    window.addEventListener("resize", syncAppHeight);
+    window.addEventListener("orientationchange", syncAppHeight);
+    if (window.visualViewport) {
+      window.visualViewport.addEventListener("resize", syncAppHeight);
+      window.visualViewport.addEventListener("scroll", syncAppHeight);
+    }
+
     // ===== Game Config =====
     const config = {
       type: Phaser.AUTO,
@@ -1389,7 +1426,10 @@ QUITでやめる`;
       scene: [BootScene, StartScene, GameScene, PauseScene, GameOverScene]
     };
 
-    new Phaser.Game(config);
+    syncAppHeight(true);
+    const game = new Phaser.Game(config);
+    activeGame = game;
+    syncAppHeight(true);
   </script>
 </body>
 </html>
