@@ -6,7 +6,7 @@
   <title>Math Lane Shooter</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;700&family=Space+Grotesk:wght@400;500;600&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;700&family=Rajdhani:wght@600;700&family=Space+Grotesk:wght@400;500;600&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
@@ -19,6 +19,7 @@
     const randInt = (min, max) => Math.floor(Math.random() * (max - min + 1)) + min;
     const FONT_TITLE = '"Orbitron", "Space Grotesk", sans-serif';
     const FONT_UI = '"Space Grotesk", sans-serif';
+    const FONT_ENEMY = '"Rajdhani", "Orbitron", sans-serif';
     const SHIP_STYLES = ["sharp", "flare"];
     let currentShip = "sharp";
     let currentMode = "sub";
@@ -647,7 +648,7 @@ STARTでゲーム開始`;
 
         // UI with modern styling
         this.questionText = this.add.text(w/2, 28, "", {
-          fontFamily: FONT_TITLE,
+          fontFamily: FONT_ENEMY,
           fontSize: "32px",
           color: "#7dd3fc",
           fontStyle: "bold",
@@ -971,8 +972,8 @@ STARTでゲーム開始`;
           if (s.body) s.body.setSize(96, 64, true);
 
           const t = this.add.text(s.x, s.y, String(value), {
-            fontFamily: FONT_TITLE,
-            fontSize: "22px",
+            fontFamily: FONT_ENEMY,
+            fontSize: "24px",
             color: "#fbbf24",
             stroke: "#0b1024",
             strokeThickness: 3,

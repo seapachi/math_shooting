@@ -204,3 +204,9 @@
 - `index.html` にモード選択（引き算/掛け算）のセグメントUIを追加し、選択したモードを `GameScene` に渡すようにしました。
 - `index.html` に掛け算問題の生成ロジックを追加し、問題文は `×` 表記で出すようにしました。
 - `index.html` のモード選択UIがパネルに隠れないように、描画順（`setDepth`）を調整しました。
+- `reference/font-compare.html` を追加し、敵数字フォント候補（Orbitron / Rajdhani / Exo 2 / Chakra Petch / Atkinson Hyperlegible）を見比べられるようにしました。
+- index.html �̓G�i�I�����j�����t�H���g�� Rajdhani�i�����j�ɕύX���܂����B
+- index.html の問題文フォントを敵数字と同じ Rajdhani 系に統一し、敵数字フォントサイズを 24px に調整しました。
+- eference/font-size-compare.html を追加し、問題文と敵数字のサイズ比較（敵のMAX SAFE自動算出付き）ができるようにしました。
+- eference/font-size-compare.html の敵数字サンプル文字が見えにくい問題を修正し、文字色・ストローク・影を調整しました。
+- eference/font-compare.html にゲーム採用フォント（Rajdhani）を明示し、比較カードでも現在採用フォントをハイライト表示するようにしました。
