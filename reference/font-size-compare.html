@@ -1,0 +1,198 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>フォント確認サンプル</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@600;700&family=Orbitron:wght@500;700&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg: #0b1024;
+      --panel: #121a36;
+      --line: #fbbf24;
+      --sub: #94a3b8;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      padding: 24px;
+      font-family: "Rajdhani", sans-serif;
+      color: #e8eeff;
+      background:
+        radial-gradient(1100px 700px at 12% -18%, #1b2450 0%, transparent 56%),
+        radial-gradient(900px 620px at 88% 118%, #22144b 0%, transparent 64%),
+        linear-gradient(180deg, #080d1f 0%, #0b1024 100%);
+    }
+
+    .wrap {
+      width: min(1120px, 100%);
+      margin: 0 auto;
+      border: 1px solid #2a3567;
+      border-radius: 16px;
+      padding: 20px;
+      background: rgba(10, 14, 31, 0.84);
+      box-shadow: 0 20px 44px rgba(0, 0, 0, 0.35);
+    }
+
+    h1 {
+      margin: 0 0 6px;
+      font-size: 24px;
+      font-family: "Orbitron", sans-serif;
+    }
+
+    .sub {
+      margin: 0 0 16px;
+      font-size: 15px;
+      color: var(--sub);
+      line-height: 1.45;
+    }
+
+    .section-title {
+      margin: 18px 0 10px;
+      font-size: 18px;
+      color: #c6d2ff;
+      font-family: "Orbitron", sans-serif;
+    }
+
+    .grid {
+      display: grid;
+      gap: 12px;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    }
+
+    .card {
+      border: 1px solid #334079;
+      border-radius: 12px;
+      background: var(--panel);
+      padding: 12px;
+    }
+
+    .label {
+      margin: 0 0 10px;
+      font-family: "Orbitron", sans-serif;
+      font-size: 13px;
+      color: #d1ddff;
+      letter-spacing: 0.2px;
+    }
+
+    .question-sample {
+      min-height: 80px;
+      display: grid;
+      place-items: center;
+      border: 1px solid #30406f;
+      border-radius: 12px;
+      background: #0f1632;
+      color: #7dd3fc;
+      font-family: "Rajdhani", sans-serif;
+      font-weight: 700;
+      line-height: 1;
+    }
+
+    .question-current {
+      font-size: 32px;
+      color: #7dd3fc;
+      text-shadow: 0 0 10px rgba(56, 189, 248, 0.35);
+    }
+
+    .question-proposed {
+      font-size: 38px;
+      color: #7dd3fc;
+      text-shadow:
+        -1px -1px 0 #0b1024,
+        1px -1px 0 #0b1024,
+        -1px 1px 0 #0b1024,
+        1px 1px 0 #0b1024,
+        0 0 12px rgba(56, 189, 248, 0.34);
+    }
+
+    .enemy-row {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .enemy-box {
+      width: 78px;
+      height: 44px;
+      border-radius: 11px;
+      border: 3px solid var(--line);
+      box-shadow: 0 0 8px rgba(251, 191, 36, 0.32);
+      display: grid;
+      place-items: center;
+      background: rgba(11, 16, 36, 0.22);
+      color: #fbbf24;
+      font-family: "Rajdhani", sans-serif;
+      font-weight: 700;
+      line-height: 1;
+    }
+
+    .enemy-current {
+      font-size: 24px;
+      text-shadow:
+        -1px -1px 0 #0b1024,
+        1px -1px 0 #0b1024,
+        -1px 1px 0 #0b1024,
+        1px 1px 0 #0b1024;
+    }
+
+    .enemy-proposed {
+      font-size: 28px;
+      text-shadow:
+        -1px -1px 0 #0b1024,
+        1px -1px 0 #0b1024,
+        -1px 1px 0 #0b1024,
+        1px 1px 0 #0b1024,
+        0 0 8px rgba(251, 191, 36, 0.22);
+    }
+
+    .enemy-note {
+      margin: 8px 0 0;
+      color: var(--sub);
+      font-size: 13px;
+      line-height: 1.35;
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <h1>フォント改善サンプル（実装前確認）</h1>
+    <p class="sub">左が現行、右が改善案です。文字色はゲーム本体と同じ（問題文 #7dd3fc / 敵数字 #fbbf24）に合わせています。</p>
+
+    <p class="section-title">1) 問題文（上部テキスト）</p>
+    <div class="grid">
+      <section class="card">
+        <p class="label">現行: Rajdhani 32px + glow</p>
+        <div class="question-sample question-current">12 - 7</div>
+      </section>
+      <section class="card">
+        <p class="label">改善案: Rajdhani 38px + subtle outline + glow</p>
+        <div class="question-sample question-proposed">12 - 7</div>
+      </section>
+    </div>
+
+    <p class="section-title">2) 敵数字（選択肢）</p>
+    <div class="grid">
+      <section class="card">
+        <p class="label">現行: Rajdhani 24px + stroke 3px</p>
+        <div class="enemy-row">
+          <div class="enemy-box enemy-current">42</div>
+          <div class="enemy-box enemy-current">88</div>
+        </div>
+      </section>
+      <section class="card">
+        <p class="label">改善案: Rajdhani 28px + subtle outline + shadow</p>
+        <div class="enemy-row">
+          <div class="enemy-box enemy-proposed">42</div>
+          <div class="enemy-box enemy-proposed">88</div>
+        </div>
+        <p class="enemy-note">二桁でも枠内に収まり、遠目で判別しやすい設定を想定しています。</p>
+      </section>
+    </div>
+  </div>
+</body>
+</html>

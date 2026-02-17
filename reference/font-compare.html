@@ -1,0 +1,147 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Enemy Number Font Compare</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=Chakra+Petch:wght@500;700&family=Exo+2:wght@500;700&family=Orbitron:wght@500;700&family=Rajdhani:wght@600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #0b1024;
+      --panel: #121a36;
+      --line: #fbbf24;
+      --ink: #fbbf24;
+      --sub: #a7b0d1;
+    }
+
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: "Exo 2", sans-serif;
+      color: #e6ecff;
+      background:
+        radial-gradient(1200px 700px at 20% -10%, #17214a 0%, transparent 55%),
+        radial-gradient(900px 500px at 90% 120%, #20174a 0%, transparent 60%),
+        linear-gradient(180deg, #080d1f 0%, #0b1024 100%);
+      display: grid;
+      place-items: center;
+      padding: 24px;
+    }
+
+    .wrap {
+      width: min(980px, 100%);
+      background: rgba(8, 12, 28, 0.78);
+      border: 1px solid #2a3567;
+      border-radius: 16px;
+      padding: 20px;
+      box-shadow: 0 22px 48px rgba(0, 0, 0, 0.35);
+    }
+
+    h1 {
+      margin: 0 0 6px;
+      font-size: 24px;
+      letter-spacing: 0.4px;
+    }
+
+    .sub {
+      margin: 0 0 18px;
+      color: var(--sub);
+      font-size: 14px;
+    }
+
+    .grid {
+      display: grid;
+      gap: 14px;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    }
+
+    .card {
+      background: var(--panel);
+      border: 1px solid #334079;
+      border-radius: 12px;
+      padding: 12px;
+    }
+
+    .current {
+      border-color: #67e8f9;
+      box-shadow: 0 0 0 1px rgba(103, 232, 249, 0.4), 0 0 14px rgba(103, 232, 249, 0.2);
+    }
+
+    .name {
+      margin: 0 0 10px;
+      font-size: 14px;
+      color: #c9d2f7;
+    }
+
+    .enemy {
+      border-radius: 12px;
+      border: 3px solid var(--line);
+      box-shadow: 0 0 8px rgba(251, 191, 36, 0.32);
+      background: transparent;
+      padding: 8px;
+      margin-bottom: 8px;
+      text-align: center;
+      color: var(--ink);
+      font-size: 34px;
+      line-height: 1.1;
+      font-weight: 700;
+      text-shadow: 0 1px 0 #0b1024;
+    }
+
+    .set {
+      margin-top: 6px;
+      text-align: center;
+      font-size: 22px;
+      letter-spacing: 1px;
+      color: #f8fafc;
+    }
+
+    .orbitron { font-family: "Orbitron", sans-serif; }
+    .rajdhani { font-family: "Rajdhani", sans-serif; }
+    .exo2 { font-family: "Exo 2", sans-serif; }
+    .chakra { font-family: "Chakra Petch", sans-serif; }
+    .atkinson { font-family: "Atkinson Hyperlegible", sans-serif; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <h1>Enemy Number Font Comparison</h1>
+    <p class="sub">Game current font is Rajdhani. Compare readability for 3/8, 6/9, 1/7, 4/9.</p>
+
+    <div class="grid">
+      <section class="card current">
+        <p class="name">Rajdhani (game current)</p>
+        <div class="enemy rajdhani">42</div>
+        <div class="set rajdhani">38 69 17 49 24 81</div>
+      </section>
+
+      <section class="card">
+        <p class="name">Orbitron (legacy)</p>
+        <div class="enemy orbitron">42</div>
+        <div class="set orbitron">38 69 17 49 24 81</div>
+      </section>
+
+      <section class="card">
+        <p class="name">Exo 2</p>
+        <div class="enemy exo2">42</div>
+        <div class="set exo2">38 69 17 49 24 81</div>
+      </section>
+
+      <section class="card">
+        <p class="name">Chakra Petch</p>
+        <div class="enemy chakra">42</div>
+        <div class="set chakra">38 69 17 49 24 81</div>
+      </section>
+
+      <section class="card">
+        <p class="name">Atkinson Hyperlegible</p>
+        <div class="enemy atkinson">42</div>
+        <div class="set atkinson">38 69 17 49 24 81</div>
+      </section>
+    </div>
+  </div>
+</body>
+</html>
