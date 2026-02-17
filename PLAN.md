@@ -14,6 +14,7 @@
 | T8 | iOS Chrome の viewport 高さ追従対応 | 完了 | `index.html`, `styles.css`, `PLAN.md` | `visualViewport` と `--app-height` で見切れを防止 |
 | T9 | 説明ドキュメント更新（viewport対応） | 完了 | `EXPLANATION.md`, `PLAN.md` | 高さ同期と `scale.refresh()` の説明を追記 |
 | T10 | `.gitignore` から `reference/` の除外を解除 | 完了 | `.gitignore`, `PLAN.md` | `reference/` を Git 管理対象に戻す |
+| T11 | HUDパネル（SCORE/SPEED/LIFE）デザイン調整 | 完了 | `index.html`, `EXPLANATION.md`, `PLAN.md` | SVG寄せレイアウト・LIFEバー表示へ更新 |
 
 ## 運用メモ
 - 状態は `未着手 / 進行中 / 完了 / 保留` を使う。

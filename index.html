@@ -127,10 +127,6 @@
       const choices = shuffle([...set]);
       return { text: `${a} × ${b}`, correct, choices };
     }
-
-    function hearts(n) {
-      return "\u2665".repeat(Math.max(0, n));
-    }
     // ===== SFX (Web Audio synth: punchy shooter) =====
     // iOS requires user gesture before audio can play; we call SFX.resume() on START tap.
     // Picked set: shoot:1 correct:4 wrong:1 miss:2 ui:1
@@ -726,35 +722,68 @@ STARTでゲーム開始`;
         }).setOrigin(0.5);
 
         // Score panel
-        const scorePanel = this.add.rectangle(80, 110, 140, 50, 0x0b1024, 0.8);
-        scorePanel.setStrokeStyle(2, 0xfbbf24, 0.5);
-        
-        this.scoreText = this.add.text(80, 110, "SCORE: 0", {
-          fontFamily: FONT_UI,
-          fontSize: "18px",
-          color: "#fbbf24",
+        const scorePanelX = 30 + (220 / 2);
+        const scorePanelY = 150 + (65 / 2);
+        const scorePanel = this.add.rectangle(scorePanelX, scorePanelY, 220, 65, 0x0b1024, 0.8);
+        scorePanel.setStrokeStyle(2, 0xff8800, 0.9);
+
+        this.scoreText = this.add.text(scorePanelX, scorePanelY, "SCORE: 0", {
+          fontFamily: FONT_ENEMY,
+          fontSize: "34px",
+          color: "#ffb347",
           fontStyle: "bold"
         }).setOrigin(0.5);
 
-        // Lives panel
-        const livesPanel = this.add.rectangle(w - 80, 110, 100, 50, 0x0b1024, 0.8);
-        livesPanel.setStrokeStyle(2, 0xef4444, 0.5);
-        
-        this.livesText = this.add.text(w - 80, 110, hearts(this.lives), {
-  fontFamily: FONT_UI,
-  fontSize: "20px"
-}).setOrigin(0.5);
+        const scoreAccent = this.add.graphics();
+        scoreAccent.lineStyle(3, 0xff8800, 1);
+        scoreAccent.lineBetween(30, 150, 30, 215);
 
         // Speed indicator panel
-        const speedPanel = this.add.rectangle(80, 160, 120, 40, 0x0b1024, 0.8);
-        speedPanel.setStrokeStyle(2, 0x22d3ee, 0.5);
-        
-        this.speedText = this.add.text(80, 160, "SPEED: 0", {
-          fontFamily: FONT_UI,
-          fontSize: "14px",
-          color: "#22d3ee",
+        const speedPanelX = 30 + (180 / 2);
+        const speedPanelY = 235 + (58 / 2);
+        const speedPanel = this.add.rectangle(speedPanelX, speedPanelY, 180, 58, 0x0b1024, 0.8);
+        speedPanel.setStrokeStyle(2, 0x00ffff, 0.9);
+
+        this.speedText = this.add.text(speedPanelX, speedPanelY, "SPEED: 0", {
+          fontFamily: FONT_ENEMY,
+          fontSize: "28px",
+          color: "#67e8f9",
           fontStyle: "bold"
         }).setOrigin(0.5);
+
+        const speedAccent = this.add.graphics();
+        speedAccent.lineStyle(3, 0x00ffff, 1);
+        speedAccent.lineBetween(30, 235, 30, 293);
+
+        // Lives panel
+        const livesPanelWidth = 220;
+        const livesPanelHeight = 65;
+        const livesPanelX = w - 30 - (livesPanelWidth / 2);
+        const livesPanelY = 150 + (livesPanelHeight / 2);
+        const livesPanel = this.add.rectangle(livesPanelX, livesPanelY, livesPanelWidth, livesPanelHeight, 0x0b1024, 0.8);
+        livesPanel.setStrokeStyle(2, 0x00ffaa, 0.9);
+
+        this.livesText = this.add.text(livesPanelX - 20, livesPanelY, `LIFE: ${this.lives}`, {
+          fontFamily: FONT_ENEMY,
+          fontSize: "32px",
+          color: "#6ee7b7",
+          fontStyle: "bold"
+        }).setOrigin(0.5);
+
+        this.lifeBars = [];
+        const lifeBarStartX = livesPanelX + 62;
+        const lifeBarTopY = livesPanelY - 20;
+        for (let i = 0; i < 3; i++) {
+          const bar = this.add.rectangle(lifeBarStartX, lifeBarTopY + i * 20, 26, 12, 0x00ffaa, 0.95);
+          bar.setStrokeStyle(1, 0x99ffe0, 0.9);
+          this.lifeBars.push(bar);
+        }
+
+        const livesAccent = this.add.graphics();
+        livesAccent.lineStyle(3, 0x00ffaa, 1);
+        livesAccent.lineBetween(w - 30, 150, w - 30, 215);
+
+        this.updateLivesDisplay();
 
         // Debug (helps verify lane/answer selection)
         this.debugText = this.add.text(14, h - 26, "", {
@@ -1023,7 +1052,7 @@ STARTでゲーム開始`;
         this.question = makeQuestion(this.mode);
         this.questionText.setText(this.question.text);
         this.scoreText.setText(`SCORE: ${this.score}`);
-        this.livesText.setText(hearts(this.lives));
+        this.updateLivesDisplay();
 
         const { height: h } = this.scale;
 
@@ -1080,6 +1109,14 @@ STARTでゲーム開始`;
         // (set in create).
       }
 
+      updateLivesDisplay() {
+        this.livesText.setText(`LIFE: ${this.lives}`);
+        for (let i = 0; i < this.lifeBars.length; i++) {
+          const active = i < this.lives;
+          this.lifeBars[i].setFillStyle(active ? 0x00ffaa : 0x1f2937, active ? 0.95 : 0.6);
+        }
+      }
+
       flash(label, color) {
         const { width: w, height: h } = this.scale;
         
@@ -1130,7 +1167,7 @@ STARTでゲーム開始`;
 
         // Update UI with animation
         this.scoreText.setText(`SCORE: ${this.score}`);
-        this.livesText.setText(hearts(this.lives));
+        this.updateLivesDisplay();
         
         // Pulse effect on score/lives panels
         if (label.includes("CORRECT")) {
