@@ -776,11 +776,20 @@ STARTでゲーム開始`;
         const livesPanel = this.add.rectangle(livesPanelX, livesPanelY, livesPanelWidth, hudPanelHeight, 0x0b1024, 0.8);
         livesPanel.setStrokeStyle(2, 0x00ffaa, 0.9);
 
+        const livesFontSize = Math.max(18, Math.min(28, Math.round(livesPanelWidth * 0.14)));
+        const livesLabelX = livesPanelX - (livesPanelWidth / 2) + 14;
+        this.livesText = this.add.text(livesLabelX, livesPanelY, "LIF:", {
+          fontFamily: FONT_ENEMY,
+          fontSize: `${livesFontSize}px`,
+          color: "#6ee7b7",
+          fontStyle: "bold"
+        }).setOrigin(0, 0.5);
+
         this.lifeBars = [];
-        const lifeBarWidth = Math.max(22, Math.min(32, Math.round(livesPanelWidth * 0.14)));
+        const lifeBarWidth = Math.max(20, Math.min(30, Math.round(livesPanelWidth * 0.12)));
         const lifeBarHeight = 10;
         const lifeBarGapY = 15;
-        const lifeBarStartX = livesPanelX;
+        const lifeBarStartX = livesPanelX + (livesPanelWidth / 2) - lifeBarWidth - 14;
         const lifeBarTopY = livesPanelY - lifeBarGapY;
         for (let i = 0; i < 3; i++) {
           const bar = this.add.rectangle(lifeBarStartX, lifeBarTopY + i * lifeBarGapY, lifeBarWidth, lifeBarHeight, 0x00ffaa, 0.95);
@@ -1119,9 +1128,11 @@ STARTでゲーム開始`;
       }
 
       updateLivesDisplay() {
+        const activeStartIndex = Math.max(0, 3 - this.lives);
         for (let i = 0; i < this.lifeBars.length; i++) {
-          const active = i < this.lives;
-          this.lifeBars[i].setFillStyle(active ? 0x00ffaa : 0x1f2937, active ? 0.95 : 0.6);
+          const active = i >= activeStartIndex;
+          this.lifeBars[i].setFillStyle(active ? 0x00ffaa : 0x0b1024, active ? 0.95 : 0.85);
+          this.lifeBars[i].setStrokeStyle(1, active ? 0x99ffe0 : 0xffffff, active ? 0.9 : 0.95);
         }
       }
 
