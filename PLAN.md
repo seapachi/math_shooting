@@ -22,6 +22,7 @@
 | T16 | 画面変更時のプレビュー確認ルールをAGENTSへ追加 | 完了 | `AGENTS.md`, `PLAN.md` | 今後のUI変更でプレビュー表示を必須化 |
 | T17 | マージ競合を防ぐ事前チェック手順を追加 | 完了 | `AGENTS.md`, `PLAN.md` | PR前の差分確認と競合時の解消方針を明文化 |
 | T18 | LIFEパネルにLIFラベルを戻しバー減少方向を上からへ変更 | 完了 | `index.html`, `EXPLANATION.md`, `PLAN.md` | LIFラベル+右側バー、減少時は上から白抜き化 |
+| T19 | LIFEパネルのフォントサイズを他HUDと統一 | 完了 | `index.html`, `EXPLANATION.md`, `PLAN.md` | LIFラベルの文字サイズを他パネルと合わせる |
 
 ## 運用メモ
 - 状態は `未着手 / 進行中 / 完了 / 保留` を使う。

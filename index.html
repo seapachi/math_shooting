@@ -776,7 +776,7 @@ STARTでゲーム開始`;
         const livesPanel = this.add.rectangle(livesPanelX, livesPanelY, livesPanelWidth, hudPanelHeight, 0x0b1024, 0.8);
         livesPanel.setStrokeStyle(2, 0x00ffaa, 0.9);
 
-        const livesFontSize = Math.max(18, Math.min(28, Math.round(livesPanelWidth * 0.14)));
+        const livesFontSize = scoreFontSize;
         const livesLabelX = livesPanelX - (livesPanelWidth / 2) + 14;
         this.livesText = this.add.text(livesLabelX, livesPanelY, "LIF:", {
           fontFamily: FONT_ENEMY,
