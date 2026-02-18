@@ -23,6 +23,9 @@
 | T17 | マージ競合を防ぐ事前チェック手順を追加 | 完了 | `AGENTS.md`, `PLAN.md` | PR前の差分確認と競合時の解消方針を明文化 |
 | T18 | LIFEパネルにLIFラベルを戻しバー減少方向を上からへ変更 | 完了 | `index.html`, `EXPLANATION.md`, `PLAN.md` | LIFラベル+右側バー、減少時は上から白抜き化 |
 | T19 | LIFEパネルのフォントサイズを他HUDと統一 | 完了 | `index.html`, `EXPLANATION.md`, `PLAN.md` | LIFラベルの文字サイズを他パネルと合わせる |
+| T20 | 問題表示パネルのサイバー演出強化 | 完了 | `index.html`, `EXPLANATION.md`, `PLAN.md` | 半透明枠・四隅L字・大きめフォント・シアングローへ更新 |
+| T21 | 問題パネルのHUD非重なり対応（B+C） | 完了 | `index.html`, `EXPLANATION.md`, `PLAN.md` | HUD→問題の縦積み固定と狭画面での段階縮小を実装 |
+| T22 | スクリーンショット取得手順の安定化ルールを追加 | 完了 | `AGENTS.md`, `PLAN.md` | サーバー疎通確認・保存パス統一・失敗時報告テンプレを明文化 |
 
 ## 運用メモ
 - 状態は `未着手 / 進行中 / 完了 / 保留` を使う。
