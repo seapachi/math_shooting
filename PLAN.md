@@ -24,6 +24,7 @@
 | T18 | LIFEパネルにLIFラベルを戻しバー減少方向を上からへ変更 | 完了 | `index.html`, `EXPLANATION.md`, `PLAN.md` | LIFラベル+右側バー、減少時は上から白抜き化 |
 | T19 | LIFEパネルのフォントサイズを他HUDと統一 | 完了 | `index.html`, `EXPLANATION.md`, `PLAN.md` | LIFラベルの文字サイズを他パネルと合わせる |
 | T20 | 問題表示パネルのサイバー演出強化 | 完了 | `index.html`, `EXPLANATION.md`, `PLAN.md` | 半透明枠・四隅L字・大きめフォント・シアングローへ更新 |
+| T21 | 基準画面サイズ（390x844）ルールをAGENTSへ追記 | 完了 | `AGENTS.md`, `PLAN.md` | 現行実装の基準サイズを運用ルールとして明文化 |
 
 ## 運用メモ
 - 状態は `未着手 / 進行中 / 完了 / 保留` を使う。
