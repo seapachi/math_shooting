@@ -703,24 +703,37 @@ STARTでゲーム開始`;
         lanesG.lineStyle(2, 0x0f172a, 1);
         lanesG.lineBetween(0, 80, w, 80);
 
-        // Question panel (top-center)
+        const hudMarginX = 20;
+        const hudGap = 10;
+        const hudTopY = 148;
+        const hudPanelHeight = 52;
+        const hudPanelWidth = (w - (hudMarginX * 2) - (hudGap * 2)) / 3;
+        const scorePanelWidth = hudPanelWidth;
+        const speedPanelWidth = hudPanelWidth;
+        const livesPanelWidth = hudPanelWidth;
+
+        const compactLevel = h < 700 ? 2 : (h < 780 ? 1 : 0);
+        const questionPanelHeight = compactLevel === 2 ? 92 : (compactLevel === 1 ? 100 : 110);
+        const questionFontSize = compactLevel === 2 ? 52 : (compactLevel === 1 ? 56 : 60);
+        const cornerLen = compactLevel === 2 ? 16 : (compactLevel === 1 ? 20 : 24);
+        const cornerOffset = compactLevel === 2 ? 6 : (compactLevel === 1 ? 7 : 8);
         const questionPanelWidth = Math.min(520, Math.max(300, w * 0.72));
-        const questionPanelHeight = 110;
         const questionPanelX = w / 2;
-        const questionPanelY = Math.round(h * 0.22);
+        const questionGapFromHud = 16;
+        const hudBottomY = hudTopY + (hudPanelHeight / 2);
+        const questionPanelY = Math.round(hudBottomY + questionGapFromHud + (questionPanelHeight / 2));
         const questionPanelLeft = questionPanelX - (questionPanelWidth / 2);
         const questionPanelRight = questionPanelX + (questionPanelWidth / 2);
         const questionPanelTop = questionPanelY - (questionPanelHeight / 2);
         const questionPanelBottom = questionPanelY + (questionPanelHeight / 2);
 
+        // Question panel (below HUD)
         const questionPanelG = this.add.graphics();
         questionPanelG.fillStyle(0x041726, 0.5);
         questionPanelG.fillRoundedRect(questionPanelLeft, questionPanelTop, questionPanelWidth, questionPanelHeight, 12);
         questionPanelG.lineStyle(3, 0x00ffff, 0.9);
         questionPanelG.strokeRoundedRect(questionPanelLeft, questionPanelTop, questionPanelWidth, questionPanelHeight, 12);
 
-        const cornerLen = 24;
-        const cornerOffset = 8;
         questionPanelG.lineStyle(4, 0x67e8f9, 0.95);
         // top-left
         questionPanelG.lineBetween(questionPanelLeft + cornerOffset, questionPanelTop + cornerOffset, questionPanelLeft + cornerOffset + cornerLen, questionPanelTop + cornerOffset);
@@ -737,7 +750,7 @@ STARTでゲーム開始`;
 
         this.questionText = this.add.text(questionPanelX, questionPanelY, "", {
           fontFamily: FONT_ENEMY,
-          fontSize: "60px",
+          fontSize: `${questionFontSize}px`,
           color: "#99f6ff",
           stroke: "#0b1024",
           strokeThickness: 3,
@@ -751,15 +764,6 @@ STARTでゲーム開始`;
             fill: true
           }
         }).setOrigin(0.5);
-
-        const hudMarginX = 20;
-        const hudGap = 10;
-        const hudTopY = 148;
-        const hudPanelHeight = 52;
-        const hudPanelWidth = (w - (hudMarginX * 2) - (hudGap * 2)) / 3;
-        const scorePanelWidth = hudPanelWidth;
-        const speedPanelWidth = hudPanelWidth;
-        const livesPanelWidth = hudPanelWidth;
 
         // Score panel (top row)
         const scorePanelX = hudMarginX + (scorePanelWidth / 2);
