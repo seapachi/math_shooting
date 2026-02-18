@@ -15,6 +15,12 @@
 | T9 | 説明ドキュメント更新（viewport対応） | 完了 | `EXPLANATION.md`, `PLAN.md` | 高さ同期と `scale.refresh()` の説明を追記 |
 | T10 | `.gitignore` から `reference/` の除外を解除 | 完了 | `.gitignore`, `PLAN.md` | `reference/` を Git 管理対象に戻す |
 | T11 | HUDパネル（SCORE/SPEED/LIFE）デザイン調整 | 完了 | `index.html`, `EXPLANATION.md`, `PLAN.md` | SVG寄せレイアウト・LIFEバー表示へ更新 |
+| T12 | HUD上段パネルの重なり解消（狭幅対応） | 完了 | `index.html`, `EXPLANATION.md`, `PLAN.md` | 画面幅に応じてSCORE/LIFE幅と文字サイズを自動調整し、重なりを防止 |
+| T13 | HUDパネルの縦幅縮小と横一列レイアウト化 | 完了 | `index.html`, `EXPLANATION.md`, `PLAN.md` | SCORE/SPEED/LIFEを上段1列へ再配置し、縦幅を縮小 |
+| T14 | HUDラベル短縮（A案）と等幅パネル化 | 完了 | `index.html`, `EXPLANATION.md`, `PLAN.md` | SCR/SPD/LIFへ短縮し、上段3パネルを同じ幅に統一 |
+| T15 | LIFE数値ラベルを削除してバー表示のみへ変更 | 完了 | `index.html`, `EXPLANATION.md`, `PLAN.md` | 右パネルの表示をライフバー専用にする |
+| T16 | 画面変更時のプレビュー確認ルールをAGENTSへ追加 | 完了 | `AGENTS.md`, `PLAN.md` | 今後のUI変更でプレビュー表示を必須化 |
+| T17 | マージ競合を防ぐ事前チェック手順を追加 | 完了 | `AGENTS.md`, `PLAN.md` | PR前の差分確認と競合時の解消方針を明文化 |
 
 ## 運用メモ
 - 状態は `未着手 / 進行中 / 完了 / 保留` を使う。
