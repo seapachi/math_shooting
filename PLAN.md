@@ -20,6 +20,7 @@
 | T14 | HUDラベル短縮（A案）と等幅パネル化 | 完了 | `index.html`, `EXPLANATION.md`, `PLAN.md` | SCR/SPD/LIFへ短縮し、上段3パネルを同じ幅に統一 |
 | T15 | LIFE数値ラベルを削除してバー表示のみへ変更 | 完了 | `index.html`, `EXPLANATION.md`, `PLAN.md` | 右パネルの表示をライフバー専用にする |
 | T16 | 画面変更時のプレビュー確認ルールをAGENTSへ追加 | 完了 | `AGENTS.md`, `PLAN.md` | 今後のUI変更でプレビュー表示を必須化 |
+| T17 | マージ競合を防ぐ事前チェック手順を追加 | 完了 | `AGENTS.md`, `PLAN.md` | PR前の差分確認と競合時の解消方針を明文化 |
 
 ## 運用メモ
 - 状態は `未着手 / 進行中 / 完了 / 保留` を使う。
