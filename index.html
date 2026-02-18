@@ -703,19 +703,50 @@ STARTでゲーム開始`;
         lanesG.lineStyle(2, 0x0f172a, 1);
         lanesG.lineBetween(0, 80, w, 80);
 
-        // UI with modern styling
-        this.questionText = this.add.text(w/2, 28, "", {
+        // Question panel (top-center)
+        const questionPanelWidth = Math.min(520, Math.max(300, w * 0.72));
+        const questionPanelHeight = 110;
+        const questionPanelX = w / 2;
+        const questionPanelY = Math.round(h * 0.22);
+        const questionPanelLeft = questionPanelX - (questionPanelWidth / 2);
+        const questionPanelRight = questionPanelX + (questionPanelWidth / 2);
+        const questionPanelTop = questionPanelY - (questionPanelHeight / 2);
+        const questionPanelBottom = questionPanelY + (questionPanelHeight / 2);
+
+        const questionPanelG = this.add.graphics();
+        questionPanelG.fillStyle(0x041726, 0.5);
+        questionPanelG.fillRoundedRect(questionPanelLeft, questionPanelTop, questionPanelWidth, questionPanelHeight, 12);
+        questionPanelG.lineStyle(3, 0x00ffff, 0.9);
+        questionPanelG.strokeRoundedRect(questionPanelLeft, questionPanelTop, questionPanelWidth, questionPanelHeight, 12);
+
+        const cornerLen = 24;
+        const cornerOffset = 8;
+        questionPanelG.lineStyle(4, 0x67e8f9, 0.95);
+        // top-left
+        questionPanelG.lineBetween(questionPanelLeft + cornerOffset, questionPanelTop + cornerOffset, questionPanelLeft + cornerOffset + cornerLen, questionPanelTop + cornerOffset);
+        questionPanelG.lineBetween(questionPanelLeft + cornerOffset, questionPanelTop + cornerOffset, questionPanelLeft + cornerOffset, questionPanelTop + cornerOffset + cornerLen);
+        // top-right
+        questionPanelG.lineBetween(questionPanelRight - cornerOffset, questionPanelTop + cornerOffset, questionPanelRight - cornerOffset - cornerLen, questionPanelTop + cornerOffset);
+        questionPanelG.lineBetween(questionPanelRight - cornerOffset, questionPanelTop + cornerOffset, questionPanelRight - cornerOffset, questionPanelTop + cornerOffset + cornerLen);
+        // bottom-left
+        questionPanelG.lineBetween(questionPanelLeft + cornerOffset, questionPanelBottom - cornerOffset, questionPanelLeft + cornerOffset + cornerLen, questionPanelBottom - cornerOffset);
+        questionPanelG.lineBetween(questionPanelLeft + cornerOffset, questionPanelBottom - cornerOffset, questionPanelLeft + cornerOffset, questionPanelBottom - cornerOffset - cornerLen);
+        // bottom-right
+        questionPanelG.lineBetween(questionPanelRight - cornerOffset, questionPanelBottom - cornerOffset, questionPanelRight - cornerOffset - cornerLen, questionPanelBottom - cornerOffset);
+        questionPanelG.lineBetween(questionPanelRight - cornerOffset, questionPanelBottom - cornerOffset, questionPanelRight - cornerOffset, questionPanelBottom - cornerOffset - cornerLen);
+
+        this.questionText = this.add.text(questionPanelX, questionPanelY, "", {
           fontFamily: FONT_ENEMY,
-          fontSize: "38px",
-          color: "#7dd3fc",
+          fontSize: "60px",
+          color: "#99f6ff",
           stroke: "#0b1024",
-          strokeThickness: 2,
+          strokeThickness: 3,
           fontStyle: "bold",
           shadow: {
             offsetX: 0,
             offsetY: 0,
-            color: "#38bdf8",
-            blur: 12,
+            color: "#00ffff",
+            blur: 22,
             stroke: false,
             fill: true
           }
@@ -1489,7 +1520,6 @@ QUITでやめる`;
   </script>
 </body>
 </html>
-
 
 
 
