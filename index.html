@@ -705,7 +705,7 @@ STARTでゲーム開始`;
 
         const hudMarginX = 20;
         const hudGap = 10;
-        const hudTopY = 148;
+        const hudTopY = 132;
         const hudPanelHeight = 52;
         const hudPanelWidth = (w - (hudMarginX * 2) - (hudGap * 2)) / 3;
         const scorePanelWidth = hudPanelWidth;
@@ -719,7 +719,7 @@ STARTでゲーム開始`;
         const cornerOffset = compactLevel === 2 ? 6 : (compactLevel === 1 ? 7 : 8);
         const questionPanelWidth = Math.min(520, Math.max(300, w * 0.72));
         const questionPanelX = w / 2;
-        const questionGapFromHud = 16;
+        const questionGapFromHud = 10;
         const hudBottomY = hudTopY + (hudPanelHeight / 2);
         const questionPanelY = Math.round(hudBottomY + questionGapFromHud + (questionPanelHeight / 2));
         const questionPanelLeft = questionPanelX - (questionPanelWidth / 2);
@@ -846,7 +846,7 @@ STARTでゲーム開始`;
         });
 
         // Modern pause button
-        this.pauseBtn = this.add.text(w - 30, 35, "II", {
+        this.pauseBtn = this.add.text(w - 30, 32, "II", {
           fontFamily: FONT_UI,
           fontSize: "24px",
           color: "#e5e7eb",
@@ -1524,7 +1524,6 @@ QUITでやめる`;
   </script>
 </body>
 </html>
-
 
 
 
