@@ -369,43 +369,82 @@
         const g = this.add.graphics();
 
         // Player textures (two realistic fighter silhouettes)
-        // Style A: interceptor (clean + sharp)
+        // Style A: interceptor (layered: hull / wing / cockpit / engine)
         g.clear();
-        g.fillStyle(0xb6d6f4, 1);
-        g.fillTriangle(44, 2, 56, 30, 32, 30);              // nose + upper fuselage
-        g.fillRect(32, 26, 24, 18);                           // fuselage body
-        g.fillTriangle(8, 34, 32, 28, 32, 46);                // left wing
-        g.fillTriangle(80, 34, 56, 28, 56, 46);               // right wing
-        g.fillTriangle(28, 48, 36, 40, 36, 54);               // left tail fin
-        g.fillTriangle(60, 48, 52, 40, 52, 54);               // right tail fin
-        g.fillStyle(0x1d2b42, 1);
-        g.fillRoundedRect(40, 12, 8, 10, 3);                  // cockpit
-        g.fillStyle(0x6ea3cf, 1);
-        g.fillRect(40, 29, 8, 10);                            // intake stripe
-        g.fillStyle(0xe2e8f0, 0.75);
-        g.lineStyle(2, 0xffffff, 0.35);
-        g.strokeTriangle(44, 2, 56, 30, 32, 30);
+        // wings
+        g.fillStyle(0x121c2f, 1);
+        g.fillTriangle(9, 35, 33, 28, 33, 48);
+        g.fillTriangle(79, 35, 55, 28, 55, 48);
+        g.fillTriangle(27, 49, 35, 42, 35, 54);
+        g.fillTriangle(61, 49, 53, 42, 53, 54);
+        // main hull
+        g.fillStyle(0x1b273a, 1);
+        g.fillTriangle(44, 2, 57, 30, 31, 30);
+        g.fillRoundedRect(32, 24, 24, 22, 4);
+        // cockpit
+        g.fillStyle(0x0a1322, 1);
+        g.fillRoundedRect(39, 11, 10, 12, 4);
+        // engine / flare
+        g.fillStyle(0xff8a00, 1);
+        g.fillCircle(39, 49, 2.8);
+        g.fillCircle(49, 49, 2.8);
+        g.fillStyle(0xffb347, 0.9);
+        g.fillTriangle(36, 51, 42, 51, 39, 55);
+        g.fillTriangle(46, 51, 52, 51, 49, 55);
+        // engine particles
+        g.fillStyle(0xffa64d, 0.72);
+        g.fillCircle(37, 55, 1.2);
+        g.fillCircle(51, 55, 1.2);
+        g.fillCircle(44, 56, 1);
+        // cyan edge + wingtip lights
+        g.lineStyle(2, 0x67e8f9, 0.95);
+        g.strokeTriangle(44, 2, 57, 30, 31, 30);
+        g.strokeRoundedRect(32, 24, 24, 22, 4);
+        g.lineStyle(1.5, 0x67e8f9, 0.88);
+        g.strokeTriangle(9, 35, 33, 28, 33, 48);
+        g.strokeTriangle(79, 35, 55, 28, 55, 48);
+        g.fillStyle(0x67e8f9, 0.95);
+        g.fillCircle(10, 34, 1.5);
+        g.fillCircle(78, 34, 1.5);
         g.generateTexture("player_sharp", 88, 56);
 
-        // Style B: strike fighter (heavier + engine glow)
+        // Style B: strike fighter (layered: hull / wing / cockpit / engine)
         g.clear();
-        g.fillStyle(0x9fb7cf, 1);
-        g.fillTriangle(44, 3, 58, 30, 30, 30);                // nose
-        g.fillRoundedRect(31, 24, 26, 24, 5);                 // heavy fuselage
-        g.fillTriangle(6, 36, 31, 30, 31, 50);                // left wing
-        g.fillTriangle(82, 36, 57, 30, 57, 50);               // right wing
-        g.fillTriangle(22, 50, 33, 42, 33, 56);               // tail stabilizer L
-        g.fillTriangle(66, 50, 55, 42, 55, 56);               // tail stabilizer R
-        g.fillStyle(0x172238, 1);
-        g.fillRoundedRect(40, 12, 8, 11, 3);                  // cockpit
-        g.fillStyle(0xf59e0b, 0.95);
-        g.fillCircle(38, 49, 3);                              // engine nozzle L
-        g.fillCircle(50, 49, 3);                              // engine nozzle R
-        g.fillStyle(0x7dd3fc, 0.45);
-        g.fillTriangle(35, 52, 41, 52, 38, 60);               // flame L
-        g.fillTriangle(47, 52, 53, 52, 50, 60);               // flame R
-        g.lineStyle(2, 0xffffff, 0.25);
-        g.strokeRoundedRect(31, 24, 26, 24, 5);
+        // wings
+        g.fillStyle(0x121a2a, 1);
+        g.fillTriangle(7, 36, 31, 30, 31, 51);
+        g.fillTriangle(81, 36, 57, 30, 57, 51);
+        g.fillTriangle(21, 50, 32, 42, 32, 57);
+        g.fillTriangle(67, 50, 56, 42, 56, 57);
+        // main hull
+        g.fillStyle(0x1a2538, 1);
+        g.fillTriangle(44, 3, 59, 30, 29, 30);
+        g.fillRoundedRect(30, 24, 28, 24, 6);
+        // cockpit
+        g.fillStyle(0x091221, 1);
+        g.fillRoundedRect(39, 11, 10, 12, 4);
+        // engine / flare
+        g.fillStyle(0xff8a00, 1);
+        g.fillCircle(37, 49.5, 3.1);
+        g.fillCircle(51, 49.5, 3.1);
+        g.fillStyle(0xffb347, 0.92);
+        g.fillTriangle(33.5, 52, 40.5, 52, 37, 60);
+        g.fillTriangle(47.5, 52, 54.5, 52, 51, 60);
+        // engine particles
+        g.fillStyle(0xffa64d, 0.72);
+        g.fillCircle(34, 58, 1.4);
+        g.fillCircle(54, 58, 1.4);
+        g.fillCircle(44, 61, 1.1);
+        // cyan edge + wingtip lights
+        g.lineStyle(2, 0x67e8f9, 0.95);
+        g.strokeTriangle(44, 3, 59, 30, 29, 30);
+        g.strokeRoundedRect(30, 24, 28, 24, 6);
+        g.lineStyle(1.5, 0x67e8f9, 0.85);
+        g.strokeTriangle(7, 36, 31, 30, 31, 51);
+        g.strokeTriangle(81, 36, 57, 30, 57, 51);
+        g.fillStyle(0x67e8f9, 0.95);
+        g.fillCircle(8, 35, 1.6);
+        g.fillCircle(80, 35, 1.6);
         g.generateTexture("player_flare", 88, 62);
 
         // Choice texture
@@ -1527,7 +1566,6 @@ QUITでやめる`;
   </script>
 </body>
 </html>
-
 
 
 
