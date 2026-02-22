@@ -1467,12 +1467,30 @@ QUITでやめる`;
 
     let activeGame = null;
     let appHeightSyncRaf = 0;
+    let lastViewportWidth = 0;
+    let lastViewportHeight = 0;
 
-    function applyAppHeight() {
-      const viewportHeight = window.visualViewport ? window.visualViewport.height : window.innerHeight;
-      if (!viewportHeight) return;
-      const nextHeight = Math.round(viewportHeight);
-      document.documentElement.style.setProperty("--app-height", `${nextHeight}px`);
+    function getViewportSize() {
+      const viewport = window.visualViewport;
+      const width = viewport ? viewport.width : window.innerWidth;
+      const height = viewport ? viewport.height : window.innerHeight;
+      return {
+        width: Math.round(width || 0),
+        height: Math.round(height || 0)
+      };
+    }
+
+    function applyAppHeight(force = false) {
+      const { width, height } = getViewportSize();
+      if (!height) return;
+
+      const viewportChanged = force || width !== lastViewportWidth || height !== lastViewportHeight;
+      if (!viewportChanged) return;
+
+      lastViewportWidth = width;
+      lastViewportHeight = height;
+      document.documentElement.style.setProperty("--app-height", `${height}px`);
+
       if (activeGame?.scale) {
         activeGame.scale.refresh();
       }
@@ -1484,7 +1502,7 @@ QUITでやめる`;
           window.cancelAnimationFrame(appHeightSyncRaf);
           appHeightSyncRaf = 0;
         }
-        applyAppHeight();
+        applyAppHeight(true);
         return;
       }
 
@@ -1495,11 +1513,33 @@ QUITでやめる`;
       });
     }
 
+    function applyCanvasInputSurfaceStyle() {
+      const canvas = activeGame?.canvas || document.querySelector("#game canvas");
+      if (!canvas) return false;
+
+      canvas.style.touchAction = "none";
+      canvas.style.pointerEvents = "auto";
+      canvas.style.webkitTapHighlightColor = "transparent";
+      canvas.style.userSelect = "none";
+      canvas.style.webkitUserSelect = "none";
+      canvas.style.webkitTouchCallout = "none";
+      return true;
+    }
+
+    function ensureCanvasInputSurfaceStyle(maxFrames = 120) {
+      let attempts = 0;
+      const tick = () => {
+        attempts += 1;
+        if (applyCanvasInputSurfaceStyle() || attempts >= maxFrames) return;
+        window.requestAnimationFrame(tick);
+      };
+      tick();
+    }
+
     window.addEventListener("resize", syncAppHeight);
     window.addEventListener("orientationchange", syncAppHeight);
     if (window.visualViewport) {
       window.visualViewport.addEventListener("resize", syncAppHeight);
-      window.visualViewport.addEventListener("scroll", syncAppHeight);
     }
 
     // ===== Game Config =====
@@ -1549,6 +1589,7 @@ QUITでやめる`;
       syncAppHeight(true);
       await waitForGameFonts(2500);
       activeGame = new Phaser.Game(config);
+      ensureCanvasInputSurfaceStyle();
       syncAppHeight(true);
     }
 

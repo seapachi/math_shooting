@@ -86,22 +86,24 @@
 - `styles.css`
   - ページ背景、枠、グロー、全体トーン
 
-### iOS Chrome の表示差分対策（上下見切れ防止）
-iPhone の Chrome は、アドレスバーやツールバーの表示状態で「見えている高さ」が変わることがあります。  
-この差分で `100vh` が実画面とずれると、上下が欠けて見える場合があります。
+### スマホChromeの表示差分・タップ無反応対策
+iPhone/Android の Chrome は、アドレスバーやツールバーの表示状態で「見えている高さ」が細かく変わることがあります。  
+このとき高さ再計算（`scale.refresh()`）が過剰に走ると、タップ中に入力座標がずれて「押しても反応しない」ように見えることがあります。
 
-このプロジェクトでは、次の方法で高さを同期しています。
+このプロジェクトでは、次の方法で高さ同期と入力面を安定化しています。
 
 - `styles.css`
   - `:root` に `--app-height` を用意
   - `#game` は `height: 100vh;` の後に `height: var(--app-height);` を指定
+  - `#game canvas` に `touch-action: none` と `pointer-events: auto` を明示
+  - `-webkit-tap-highlight-color: transparent` / `user-select: none` などを指定し、タップ時のブラウザ側干渉を減らす
 - `index.html`
-  - `syncAppHeight()` で `window.visualViewport?.height` を優先取得（未対応時は `window.innerHeight`）
-  - 取得した高さを `--app-height` に反映
-  - 高さ更新後に `game.scale.refresh()` を呼んで、Phaser の `FIT` レイアウトを再計算
-  - `resize` / `orientationchange`（必要に応じて `visualViewport` の `resize` / `scroll`）で再同期
+  - `syncAppHeight()` で `window.visualViewport` の `width/height`（未対応時は `innerWidth/innerHeight`）を取得
+  - 前回値と同じなら更新しない（差分があるときだけ `--app-height` 更新 + `game.scale.refresh()`）
+  - 監視イベントは `resize` / `orientationchange` / `visualViewport.resize` に限定し、`visualViewport.scroll` 連動は外す
+  - 起動後に Phaser の `canvas` へ入力安定化スタイルを直接適用
 
-この変更はレイアウト制御のみで、得点・ライフ・入力操作などのゲームルールは変更していません。
+この変更は入力の取りこぼし防止とレイアウト同期の安定化が目的で、得点・ライフ・操作ルール自体（タップ移動/スワイプ移動/ダブルタップ発射）は変更していません。
 
 
 ### HUDパネル（SCORE / SPEED / LIFE）調整

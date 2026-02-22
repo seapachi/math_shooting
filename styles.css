@@ -74,6 +74,9 @@ html, body {
   height: 100vh;
   height: var(--app-height);
   touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
   position: relative;
 }
 
@@ -106,6 +109,14 @@ html, body {
 }
 
 #game canvas {
+  position: relative;
+  z-index: 1;
+  touch-action: none;
+  pointer-events: auto;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+  -webkit-tap-highlight-color: transparent;
   border-radius: 18px;
   box-shadow: 0 20px 80px rgba(6, 8, 18, 0.7), 0 0 30px rgba(56, 189, 248, 0.18);
 }
