@@ -410,12 +410,16 @@
 
         // Choice texture
         g.clear();
-        // Score-matched outline with subtle glow
-        g.lineStyle(6, 0xfbbf24, 0.16);
-        g.strokeRoundedRect(1, 1, 76, 42, 12);
-        g.lineStyle(3, 0xfbbf24, 0.95);
-        g.strokeRoundedRect(2, 2, 74, 40, 11);
-        g.generateTexture("choice", 78, 44);
+        // Large two-layer plate (outer orange frame + dark inner panel)
+        g.lineStyle(8, 0xf59e0b, 0.2);
+        g.strokeRoundedRect(2, 2, 106, 72, 16);
+        g.fillStyle(0xf59e0b, 0.94);
+        g.fillRoundedRect(6, 6, 98, 64, 14);
+        g.fillStyle(0x0b1024, 0.74);
+        g.fillRoundedRect(12, 12, 86, 52, 10);
+        g.lineStyle(2, 0xfde68a, 0.48);
+        g.strokeRoundedRect(12, 12, 86, 52, 10);
+        g.generateTexture("choice", 110, 76);
 
         // Bullet texture
         g.clear();
@@ -1129,19 +1133,19 @@ STARTでゲーム開始`;
           s.data.set("correct", isCorrect);
 
           // More forgiving bodies (touch-friendly)
-          if (s.body) s.body.setSize(96, 64, true);
+          if (s.body) s.body.setSize(104, 72, true);
 
           const t = this.add.text(s.x, s.y, String(value), {
             fontFamily: FONT_ENEMY,
-            fontSize: "28px",
-            color: "#fbbf24",
+            fontSize: "50px",
+            color: "#ff8800",
             stroke: "#0b1024",
-            strokeThickness: 2,
+            strokeThickness: 3,
             shadow: {
               offsetX: 0,
-              offsetY: 1,
-              color: "#0b1024",
-              blur: 6,
+              offsetY: 0,
+              color: "#ff8800",
+              blur: 16,
               stroke: false,
               fill: true
             },
@@ -1527,7 +1531,6 @@ QUITでやめる`;
   </script>
 </body>
 </html>
-
 
 
 
