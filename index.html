@@ -14,6 +14,7 @@
 
   <!-- Phaser 3 (CDN) -->
   <script src="https://cdn.jsdelivr.net/npm/phaser@3.80.1/dist/phaser.min.js"></script>
+  <script src="game-settings.js"></script>
   <script>
     // ===== Utilities =====
     const randInt = (min, max) => Math.floor(Math.random() * (max - min + 1)) + min;
@@ -46,6 +47,110 @@
       return g;
     }
 
+    const CHOICE_COUNT = 4;
+    const DISTRACTOR_DELTAS = {
+      add: [-3, -2, -1, 1, 2, 3],
+      sub: [-3, -2, -1, 1, 2, 3],
+      mul: [-5, -4, -3, -2, -1, 1, 2, 3, 4, 5]
+    };
+
+    const DEFAULT_GAME_SETTINGS = {
+      speed: {
+        base: 170,
+        max: 420,
+        increaseStep: 10,
+        streakToIncrease: 3
+      },
+      question: {
+        add: { aMin: 0, aMax: 9, bMin: 0, bMax: 9 },
+        sub: { aMin: 0, aMax: 20, bMin: 0, bMax: 20 },
+        mul: { aMin: 1, aMax: 9, bMin: 1, bMax: 9 }
+      }
+    };
+
+    function toInt(value, fallback) {
+      const n = Number(value);
+      return Number.isFinite(n) ? Math.trunc(n) : fallback;
+    }
+
+    function clampInt(value, fallback, min, max) {
+      const n = toInt(value, fallback);
+      return Math.min(max, Math.max(min, n));
+    }
+
+    function normalizeMinMax(rawMin, rawMax, fallbackMin, fallbackMax, floor) {
+      let min = toInt(rawMin, fallbackMin);
+      let max = toInt(rawMax, fallbackMax);
+      if (min > max) [min, max] = [max, min];
+      min = Math.max(floor, min);
+      max = Math.max(min, max);
+      return { min, max };
+    }
+
+    function normalizeOperandRange(rawRange, defaults, floor) {
+      const a = normalizeMinMax(rawRange?.aMin, rawRange?.aMax, defaults.aMin, defaults.aMax, floor);
+      const b = normalizeMinMax(rawRange?.bMin, rawRange?.bMax, defaults.bMin, defaults.bMax, floor);
+      return { aMin: a.min, aMax: a.max, bMin: b.min, bMax: b.max };
+    }
+
+    function normalizeGameSettings(raw = {}) {
+      const speedRaw = raw?.speed ?? {};
+      const questionRaw = raw?.question ?? {};
+
+      const speed = {
+        base: clampInt(speedRaw.base, DEFAULT_GAME_SETTINGS.speed.base, 30, 3000),
+        max: clampInt(speedRaw.max, DEFAULT_GAME_SETTINGS.speed.max, 30, 3000),
+        increaseStep: clampInt(speedRaw.increaseStep, DEFAULT_GAME_SETTINGS.speed.increaseStep, 1, 500),
+        streakToIncrease: clampInt(speedRaw.streakToIncrease, DEFAULT_GAME_SETTINGS.speed.streakToIncrease, 1, 50)
+      };
+      if (speed.max < speed.base) speed.max = speed.base;
+
+      const add = normalizeOperandRange(questionRaw.add, DEFAULT_GAME_SETTINGS.question.add, 0);
+      const sub = normalizeOperandRange(questionRaw.sub, DEFAULT_GAME_SETTINGS.question.sub, 0);
+      const mul = normalizeOperandRange(questionRaw.mul, DEFAULT_GAME_SETTINGS.question.mul, 1);
+
+      if (sub.bMin > sub.aMax) sub.bMin = sub.aMax;
+      if (sub.bMax > sub.aMax) sub.bMax = sub.aMax;
+      if (sub.bMax < sub.bMin) sub.bMax = sub.bMin;
+
+      return {
+        speed,
+        question: { add, sub, mul }
+      };
+    }
+
+    const GAME_SETTINGS = normalizeGameSettings(window.GAME_SETTINGS || {});
+
+    function buildChoices(correct, minValue, maxValue, deltas) {
+      const lower = Math.min(minValue, maxValue);
+      const upper = Math.max(minValue, maxValue);
+      const set = new Set([correct]);
+
+      for (const delta of shuffle([...deltas])) {
+        if (set.size >= CHOICE_COUNT) break;
+        const candidate = correct + delta;
+        if (candidate >= lower && candidate <= upper) set.add(candidate);
+      }
+
+      for (let v = lower; v <= upper && set.size < CHOICE_COUNT; v++) {
+        set.add(v);
+      }
+
+      let guard = 0;
+      while (set.size < CHOICE_COUNT && guard < 96) {
+        set.add(randInt(lower, upper));
+        guard += 1;
+      }
+
+      let pad = upper + 1;
+      while (set.size < CHOICE_COUNT) {
+        set.add(pad);
+        pad += 1;
+      }
+
+      return shuffle([...set]).slice(0, CHOICE_COUNT);
+    }
+
     function makeQuestion(mode = "sub") {
       if (mode === "add") return makeAddQuestion();
       if (mode === "mul") return makeMulQuestion();
@@ -53,78 +158,43 @@
     }
 
     function makeAddQuestion() {
-      const a = randInt(0, 9);
-      const b = randInt(0, 9);
+      const range = GAME_SETTINGS.question.add;
+      const a = randInt(range.aMin, range.aMax);
+      const b = randInt(range.bMin, range.bMax);
       const correct = a + b;
 
-      const set = new Set([correct]);
-      const deltas = shuffle([-2, -1, +1, +2, -3, +3]);
+      const minCorrect = range.aMin + range.bMin;
+      const maxCorrect = range.aMax + range.bMax;
+      const choices = buildChoices(correct, minCorrect, maxCorrect, DISTRACTOR_DELTAS.add);
 
-      for (const d of deltas) {
-        if (set.size >= 4) break;
-        const v = correct + d;
-        if (v >= 0 && v <= 18) set.add(v);
-      }
-
-      while (set.size < 4) {
-        set.add(randInt(0, 18));
-      }
-
-      const choices = shuffle([...set]);
       return { text: `${a} + ${b}`, correct, choices };
     }
 
     function makeSubQuestion() {
-      const a = randInt(0, 20);
-      const b = randInt(0, a);
+      const range = GAME_SETTINGS.question.sub;
+      const a = randInt(range.aMin, range.aMax);
+      const bUpper = Math.min(range.bMax, a);
+      const bLower = Math.min(range.bMin, bUpper);
+      const b = randInt(bLower, bUpper);
       const correct = a - b;
 
-      const set = new Set([correct]);
-      const deltas = shuffle([-2, -1, +1, +2, -3, +3]);
+      const minCorrect = 0;
+      const maxCorrect = Math.max(0, range.aMax - range.bMin);
+      const choices = buildChoices(correct, minCorrect, maxCorrect, DISTRACTOR_DELTAS.sub);
 
-      for (const d of deltas) {
-        if (set.size >= 4) break;
-        const v = correct + d;
-        if (v >= 0 && v <= 20) set.add(v);
-      }
-
-      while (set.size < 4) {
-        set.add(randInt(0, 20));
-      }
-
-      const choices = shuffle([...set]);
       return { text: `${a} - ${b}`, correct, choices };
     }
 
     function makeMulQuestion() {
-      const a = randInt(1, 9);
-      const b = randInt(1, 9);
+      const range = GAME_SETTINGS.question.mul;
+      const a = randInt(range.aMin, range.aMax);
+      const b = randInt(range.bMin, range.bMax);
       const correct = a * b;
 
-      const set = new Set([correct]);
-      const deltas = shuffle([-3, -2, -1, +1, +2, +3]);
-      const near = deltas
-        .map(d => correct + d)
-        .filter(v => v >= 1 && v <= 81);
+      const minCorrect = range.aMin * range.bMin;
+      const maxCorrect = range.aMax * range.bMax;
+      const choices = buildChoices(correct, minCorrect, maxCorrect, DISTRACTOR_DELTAS.mul);
 
-      const tableCandidates = [
-        a * (b - 1), a * (b + 1),
-        a * (b - 2), a * (b + 2),
-        b * (a - 1), b * (a + 1),
-        b * (a - 2), b * (a + 2)
-      ].filter(v => v >= 1 && v <= 81);
-
-      const candidates = shuffle([...near, ...tableCandidates]);
-      for (const v of candidates) {
-        if (set.size >= 4) break;
-        set.add(v);
-      }
-
-      while (set.size < 4) {
-        set.add(randInt(1, 81));
-      }
-
-      const choices = shuffle([...set]);
       return { text: `${a} × ${b}`, correct, choices };
     }
     // ===== SFX (Web Audio synth: punchy shooter) =====
@@ -302,52 +372,61 @@
         for (let i = 0; i < 40; i++) {
           const q = makeQuestion(mode);
           console.assert(typeof q.text === "string", "Question text format");
-          console.assert(Array.isArray(q.choices) && q.choices.length === 4, "Choices length 4");
+          console.assert(Array.isArray(q.choices) && q.choices.length === CHOICE_COUNT, "Choices length 4");
 
           const uniq = new Set(q.choices);
           console.assert(uniq.size === 4, "Choices are unique");
           console.assert(uniq.has(q.correct), "Choices include correct");
 
           if (mode === "add") {
-            console.assert(Number.isInteger(q.correct) && q.correct >= 0 && q.correct <= 18, "Correct range (add)");
+            const range = GAME_SETTINGS.question.add;
+            const minCorrect = range.aMin + range.bMin;
+            const maxCorrect = range.aMax + range.bMax;
+            console.assert(Number.isInteger(q.correct) && q.correct >= minCorrect && q.correct <= maxCorrect, "Correct range (add)");
             for (const c of q.choices) {
-              console.assert(Number.isInteger(c) && c >= 0 && c <= 18, "Choice range (add)");
+              console.assert(Number.isInteger(c) && c >= minCorrect && c <= maxCorrect, "Choice range (add)");
             }
             const m = q.text.match(/^\s*(\d+)\s*\+\s*(\d+)\s*$/);
             console.assert(!!m, "Question text parseable (add)");
             if (m) {
               const a = Number(m[1]);
               const b = Number(m[2]);
-              console.assert(a >= 0 && a <= 9, "Parsed a range (add)");
-              console.assert(b >= 0 && b <= 9, "Parsed b range (add)");
+              console.assert(a >= range.aMin && a <= range.aMax, "Parsed a range (add)");
+              console.assert(b >= range.bMin && b <= range.bMax, "Parsed b range (add)");
               console.assert(a + b === q.correct, "Parsed correct matches (add)");
             }
           } else if (mode === "sub") {
-            console.assert(Number.isInteger(q.correct) && q.correct >= 0 && q.correct <= 20, "Correct range (sub)");
+            const range = GAME_SETTINGS.question.sub;
+            const minCorrect = 0;
+            const maxCorrect = Math.max(0, range.aMax - range.bMin);
+            console.assert(Number.isInteger(q.correct) && q.correct >= minCorrect && q.correct <= maxCorrect, "Correct range (sub)");
             for (const c of q.choices) {
-              console.assert(Number.isInteger(c) && c >= 0 && c <= 20, "Choice range (sub)");
+              console.assert(Number.isInteger(c) && c >= minCorrect && c <= maxCorrect, "Choice range (sub)");
             }
             const m = q.text.match(/^\s*(\d+)\s*-\s*(\d+)\s*$/);
             console.assert(!!m, "Question text parseable (sub)");
             if (m) {
               const a = Number(m[1]);
               const b = Number(m[2]);
-              console.assert(a >= 0 && a <= 20, "Parsed a range (sub)");
-              console.assert(b >= 0 && b <= a, "Parsed b range (sub)");
+              console.assert(a >= range.aMin && a <= range.aMax, "Parsed a range (sub)");
+              console.assert(b >= range.bMin && b <= Math.min(range.bMax, a), "Parsed b range (sub)");
               console.assert(a - b === q.correct, "Parsed correct matches (sub)");
             }
           } else {
-            console.assert(Number.isInteger(q.correct) && q.correct >= 1 && q.correct <= 81, "Correct range (mul)");
+            const range = GAME_SETTINGS.question.mul;
+            const minCorrect = range.aMin * range.bMin;
+            const maxCorrect = range.aMax * range.bMax;
+            console.assert(Number.isInteger(q.correct) && q.correct >= minCorrect && q.correct <= maxCorrect, "Correct range (mul)");
             for (const c of q.choices) {
-              console.assert(Number.isInteger(c) && c >= 1 && c <= 81, "Choice range (mul)");
+              console.assert(Number.isInteger(c) && c >= minCorrect && c <= maxCorrect, "Choice range (mul)");
             }
             const m = q.text.match(/^\s*(\d+)\s*×\s*(\d+)\s*$/);
             console.assert(!!m, "Question text parseable (mul)");
             if (m) {
               const a = Number(m[1]);
               const b = Number(m[2]);
-              console.assert(a >= 1 && a <= 9, "Parsed a range (mul)");
-              console.assert(b >= 1 && b <= 9, "Parsed b range (mul)");
+              console.assert(a >= range.aMin && a <= range.aMax, "Parsed a range (mul)");
+              console.assert(b >= range.bMin && b <= range.bMax, "Parsed b range (mul)");
               console.assert(a * b === q.correct, "Parsed correct matches (mul)");
             }
           }
@@ -356,7 +435,7 @@
           console.assert(q.choices.join(",") !== sorted || i < 3, "Choices appear shuffled (smoke)");
 
           const idx = q.choices.indexOf(q.correct);
-          console.assert(idx >= 0 && idx < 4, "Correct value has a lane index");
+          console.assert(idx >= 0 && idx < CHOICE_COUNT, "Correct value has a lane index");
           console.assert(q.choices[idx] === q.correct, "Lane index maps to correct value");
         }
       }
@@ -655,7 +734,9 @@ STARTでゲーム開始`;
         this.score = 0;
         this.lives = 3;
         this.roundCount = 0;
+        this.speedConfig = GAME_SETTINGS.speed;
         this.speedStep = 0;
+        this.correctStreak = 0;
         this.currentSpeed = 0;
         this.isPaused = false;
         this.bullets = null;
@@ -673,7 +754,9 @@ STARTでゲーム開始`;
         this.ship = data?.ship ?? currentShip;
         this.mode = data?.mode ?? currentMode;
         this.roundCount = 0;
+        this.speedConfig = GAME_SETTINGS.speed;
         this.speedStep = 0;
+        this.correctStreak = 0;
         this.currentSpeed = 0;
         this.isPaused = false;
         this.roundActive = false;
@@ -1071,12 +1154,17 @@ STARTでゲーム開始`;
           let plus = Number.isFinite(forcedScore) ? forcedScore : this.getScoreByImpactArea(impactY);
           plus = Phaser.Math.Clamp(Math.round(plus), 1, 3);
           this.score += plus;
-          this.speedStep += 1;
+          this.correctStreak += 1;
+          if (this.correctStreak >= this.speedConfig.streakToIncrease) {
+            this.speedStep += 1;
+            this.correctStreak = 0;
+          }
           SFX.play("correct");
           const correctLabel = plus === 1 ? "CORRECT" : `CORRECT +${plus}`;
           this.flash(correctLabel, 0x4ade80);
         } else {
           this.lives -= 1;
+          this.correctStreak = 0;
           SFX.play("wrong");
           this.flash("WRONG!", 0xf87171);
         }
@@ -1112,8 +1200,8 @@ STARTでゲーム開始`;
 
         const { height: h } = this.scale;
 
-        const baseSpeed = 170;
-        const fallSpeed = Math.min(420, baseSpeed + this.speedStep * 10);
+        const baseSpeed = this.speedConfig.base;
+        const fallSpeed = Math.min(this.speedConfig.max, baseSpeed + this.speedStep * this.speedConfig.increaseStep);
         this.currentSpeed = fallSpeed;
         this.speedText.setText(`SPD: ${Math.round(fallSpeed)}`);
 
@@ -1281,6 +1369,7 @@ STARTでゲーム開始`;
             if (this.bullets) this.bullets.clear(true, true);
             this.clearChoices();
             this.lives -= 1;
+            this.correctStreak = 0;
             SFX.play("miss");
             this.flash("MISS!", 0xfbbf24);
             if (this.debugText) this.debugText.setText("MISS: choices passed bottom before selection");

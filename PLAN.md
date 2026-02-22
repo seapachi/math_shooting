@@ -31,6 +31,7 @@
 | T25 | 敵数字フォントを32pxへ拡大し問題文バランスを調整 | 完了 | `index.html`, `EXPLANATION.md`, `PLAN.md` | 敵数字のみ `28px -> 32px`、問題文 `60/56/52px` は維持。390x844でプレビュー確認済み |
 | T26 | 初回問題のフォント揺れ防止（Webフォント待機） | 完了 | `index.html`, `EXPLANATION.md`, `PLAN.md` | 起動前にRajdhani読込を最大2.5秒待機し、初回表示の見た目差を抑制。390x844で表示確認済み |
 | T27 | スマホChromeのタップ無反応修正 | 完了 | `index.html`, `styles.css`, `EXPLANATION.md`, `PLAN.md` | viewport再計算の過剰実行を抑制し、canvasのタッチ入力設定を強化 |
+| T28 | 設定ファイル追加と速度・出題範囲の設定化 | 完了 | `game-settings.js`, `index.html`, `AGENTS.md`, `EXPLANATION.md`, `PLAN.md` | 速度上昇幅、連続正解条件、出題範囲を設定ファイルで変更可能にする |
 
 ## 運用メモ
 - 状態は `未着手 / 進行中 / 完了 / 保留` を使う。

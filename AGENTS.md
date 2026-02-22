@@ -9,7 +9,7 @@
 - `EXPLANATION.md` には、プロジェクト全体を平易な日本語で説明する。
 
 ## 作業範囲
-- 変更して良い: `index.html`, `styles.css`, `EXPLANATION.md`, `README.md`, `AGENTS.md`, `PLAN.md`
+- 変更して良い: `index.html`, `styles.css`, `game-settings.js`, `EXPLANATION.md`, `README.md`, `AGENTS.md`, `PLAN.md`
 - 変更しない: `node_modules/`、ビルド/生成物（例: `dist/`, `build/`）
 
 ## コーディング規約
