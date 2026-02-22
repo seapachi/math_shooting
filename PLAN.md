@@ -29,6 +29,7 @@
 | T23 | HUDと問題パネルの上寄せ調整 | 完了 | `index.html`, `EXPLANATION.md`, `PLAN.md` | HUD上端の隙間を縮め、問題パネルも連動して上へ移動 |
 | T24 | 正解時のみスピードアップする挙動へ調整 | 完了 | `index.html`, `EXPLANATION.md`, `PLAN.md` | 不正解時は落下スピードを維持 |
 | T25 | 敵数字フォントを32pxへ拡大し問題文バランスを調整 | 完了 | `index.html`, `EXPLANATION.md`, `PLAN.md` | 敵数字のみ `28px -> 32px`、問題文 `60/56/52px` は維持。390x844でプレビュー確認済み |
+| T26 | 初回問題のフォント揺れ防止（Webフォント待機） | 完了 | `index.html`, `EXPLANATION.md`, `PLAN.md` | 起動前にRajdhani読込を最大2.5秒待機し、初回表示の見た目差を抑制。390x844で表示確認済み |
 
 ## 運用メモ
 - 状態は `未着手 / 進行中 / 完了 / 保留` を使う。

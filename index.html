@@ -1520,10 +1520,45 @@ QUITでやめる`;
       scene: [BootScene, StartScene, GameScene, PauseScene, GameOverScene]
     };
 
-    syncAppHeight(true);
-    const game = new Phaser.Game(config);
-    activeGame = game;
-    syncAppHeight(true);
+    async function waitForGameFonts(timeoutMs = 2500) {
+      if (!document.fonts || typeof document.fonts.load !== "function") return;
+
+      const timer = new Promise(resolve => {
+        window.setTimeout(() => resolve("timeout"), timeoutMs);
+      });
+
+      try {
+        const fontsReady = Promise.all([
+          document.fonts.load("700 60px Rajdhani"),
+          document.fonts.load("700 56px Rajdhani"),
+          document.fonts.load("700 52px Rajdhani"),
+          document.fonts.load("700 32px Rajdhani")
+        ]).then(() => "loaded");
+
+        const result = await Promise.race([fontsReady, timer]);
+        if (result === "timeout") {
+          console.warn(`[font] Rajdhani load timeout after ${timeoutMs}ms; continue bootstrap.`);
+        }
+      } catch (err) {
+        console.warn("[font] Failed to load Rajdhani before bootstrap.", err);
+      }
+    }
+
+    async function bootstrapGame() {
+      if (activeGame) return;
+      syncAppHeight(true);
+      await waitForGameFonts(2500);
+      activeGame = new Phaser.Game(config);
+      syncAppHeight(true);
+    }
+
+    if (document.readyState === "loading") {
+      window.addEventListener("DOMContentLoaded", () => {
+        bootstrapGame();
+      }, { once: true });
+    } else {
+      bootstrapGame();
+    }
   </script>
 </body>
 </html>
