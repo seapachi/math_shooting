@@ -277,7 +277,8 @@ html, body {
 }
 
 #debug-overlay-toggle,
-#debug-overlay-clear {
+#debug-overlay-clear,
+#debug-overlay-copy {
   pointer-events: auto;
   border: 1px solid rgba(125, 211, 252, 0.7);
   background: rgba(11, 16, 36, 0.88);

@@ -68,7 +68,7 @@
           <div id="debug-overlay-panel" hidden>
             <div id="debug-overlay-header">
               <span>Debug Log</span>
-              <button id="debug-overlay-clear" type="button">CLEAR</button>
+              <div style="display:flex; gap:6px;"><button id="debug-overlay-copy" type="button">COPY</button><button id="debug-overlay-clear" type="button">CLEAR</button></div>
             </div>
             <pre id="debug-overlay-body"></pre>
           </div>
@@ -79,9 +79,25 @@
         logBody = root.querySelector("#debug-overlay-body");
         const toggle = root.querySelector("#debug-overlay-toggle");
         const clear = root.querySelector("#debug-overlay-clear");
+        const copy = root.querySelector("#debug-overlay-copy");
 
         toggle.addEventListener("click", () => {
           panel.hidden = !panel.hidden;
+        });
+
+        copy.addEventListener("click", async () => {
+          const text = lines.join("\n");
+          if (!text) return;
+          try {
+            if (navigator.clipboard && typeof navigator.clipboard.writeText === "function") {
+              await navigator.clipboard.writeText(text);
+              write("INFO", "Log copied to clipboard");
+              return;
+            }
+          } catch (_) {
+            // fallback below
+          }
+          window.prompt("ログをコピーしてください", text);
         });
 
         clear.addEventListener("click", () => {
@@ -98,6 +114,7 @@
         });
 
         write("INFO", "Debug overlay ready", { ua: navigator.userAgent, href: window.location.href });
+        write("INFO", "Tap COPY to share logs from smartphone.");
       }
 
       return { init, write };
