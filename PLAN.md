@@ -37,6 +37,7 @@
 | T31 | iPhone単体で確認できるデバッグログパネル追加 | 完了 | `index.html`, `styles.css`, `EXPLANATION.md`, `PLAN.md` | 画面右下にLOGトグルを追加し、START遷移ログを端末上で確認可能にした |
 | T32 | スマホ共有向けログコピー機能追加 | 完了 | `index.html`, `styles.css`, `EXPLANATION.md`, `PLAN.md` | DebugOverlayにCOPYボタンを追加し、ログをクリップボード/プロンプト経由で共有可能にした |
 | T33 | START遷移のaudio resume待機にタイムアウト導入 | 完了 | `index.html`, `EXPLANATION.md`, `PLAN.md` | ブラウザ分岐を除去し、`SFX.resume()`待機を350msで打ち切って遷移継続する |
+| T34 | iPhone Chromeでタイトル欠けする問題の対策 | 完了 | `index.html`, `EXPLANATION.md`, `PLAN.md` | 起動前フォント待機にタイトル用フォントを追加し、描画時の字幅ズレを抑制する |
 
 ## 運用メモ
 - 状態は `未着手 / 進行中 / 完了 / 保留` を使う。

@@ -1860,19 +1860,23 @@ QUITでやめる`;
       });
 
       try {
-        const fontsReady = Promise.all([
-          document.fonts.load("700 60px Rajdhani"),
-          document.fonts.load("700 56px Rajdhani"),
-          document.fonts.load("700 52px Rajdhani"),
-          document.fonts.load("700 32px Rajdhani")
-        ]).then(() => "loaded");
+        const preloadFonts = [
+          "700 60px Rajdhani",
+          "700 56px Rajdhani",
+          "700 52px Rajdhani",
+          "700 32px Rajdhani",
+          "700 36px Orbitron",
+          "600 16px Space Grotesk",
+          "600 15px Space Grotesk"
+        ];
+        const fontsReady = Promise.all(preloadFonts.map(fontSpec => document.fonts.load(fontSpec))).then(() => "loaded");
 
         const result = await Promise.race([fontsReady, timer]);
         if (result === "timeout") {
-          console.warn(`[font] Rajdhani load timeout after ${timeoutMs}ms; continue bootstrap.`);
+          console.warn(`[font] Web font preload timeout after ${timeoutMs}ms; continue bootstrap.`);
         }
       } catch (err) {
-        console.warn("[font] Failed to load Rajdhani before bootstrap.", err);
+        console.warn("[font] Failed to preload web fonts before bootstrap.", err);
       }
     }
 
@@ -1896,7 +1900,6 @@ QUITでやめる`;
   </script>
 </body>
 </html>
-
 
 
 
