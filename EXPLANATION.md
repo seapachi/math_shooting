@@ -263,3 +263,51 @@ HUDと問題パネルの縦位置ルールを見直し、重なりを防止し�
 - 停止ボタンのY座標を `35` から `32` に変更
 
 この調整により、停止ボタン〜HUD間の「空きすぎ感」を抑えつつ、問題パネルがHUDと重ならない配置を維持しています。ゲームロジック（問題生成、当たり判定、得点計算）は変更していません。
+
+### ChromeでのSTART遷移調査ログ追加
+タイトル画面で「STARTボタンは反応して見えるが、次画面へ進まない」症状を切り分けるため、`StartScene` と `GameScene` にコンソールログを追加しました。
+
+- `StartScene` 側
+  - STARTボタンの `pointerdown` 発火ログ
+  - 既存フォールバック命中時（座標判定）の発火ログ
+  - `start()` 開始ログ（起動元、選択中の機体/モード、`visibilityState`）
+  - `SFX.resume()` 完了ログ
+  - `scene.start("game")` 呼び出し直前ログ
+  - `startTriggered` による二重起動抑止ログ
+  - `StartScene` の `shutdown` ログ
+- `GameScene` 側
+  - `init(data)` 呼び出しログ（受け取った開始データ）
+  - `create()` 呼び出しログ
+
+この追加により、Chrome上で「押下イベントは来ているか」「音声resumeで止まっていないか」「`scene.start` が呼ばれているか」「GameScene側まで遷移しているか」を段階的に確認できます。
+
+### iPhone単体で確認できるデバッグログパネル
+iPhoneでMac接続なしでも調査できるよう、画面右下に小さな `LOG` ボタンを追加しました（`?debug=1` を付けると表示）。
+
+- `LOG` を押すとデバッグパネルを開閉
+- `CLEAR` でログを消去
+- 既存のSTART遷移ログ（`StartScene` / `GameScene`）をパネル内にも表示
+- `window.onerror` と `unhandledrejection` もパネルに表示
+- 行数は最大80行で古いものから自動削除
+
+これにより、iPhone単体で「START押下 → 音声resume → scene.start呼び出し → GameScene到達」のどこで止まっているかを確認しやすくなります。
+
+### スマホだけで共有しやすいCOPY機能
+DebugOverlayに `COPY` ボタンを追加しました。iPhoneなどでログ確認後、そのまま共有しやすくするための機能です。
+
+- `COPY` でログ全体（最大80行）をクリップボードへコピー
+- クリップボードAPIが使えない場合は `prompt` を開いて手動コピー可能
+- コピー成功時はパネル内に `Log copied to clipboard` を追記
+
+これにより、Mac接続なしでも、端末だけでログ採取→共有（チャット貼り付け）がしやすくなります。
+
+
+### START遷移時の音声resume待機タイムアウト
+START押下後に `SFX.resume()` が解決されず、`scene.start("game")` へ進まないケースに対策を入れました。
+
+- `StartScene` の `start()` に `RESUME_TIMEOUT_MS = 350` を追加
+- `SFX.resume()` は `Promise.race()` で `350ms` まで待機
+- 期限超過（timeout）や失敗（rejected）でも、ログを出してゲーム開始処理を継続
+- `scene.start("game")` は音声初期化結果に関わらず呼ばれる
+
+この変更で、音声初期化が不安定な環境でも、START後の画面遷移が止まりにくくなります。
