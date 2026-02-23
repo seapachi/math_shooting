@@ -25,6 +25,89 @@
     let currentShip = "sharp";
     let currentMode = "sub";
 
+    const DEBUG_OVERLAY_ENABLED = (() => {
+      const params = new URLSearchParams(window.location.search);
+      if (params.get("debug") === "1") return true;
+      return /iPhone|iPad|iPod/i.test(navigator.userAgent);
+    })();
+
+    const DebugOverlay = (() => {
+      let panel = null;
+      let logBody = null;
+      const lines = [];
+      const maxLines = 80;
+
+      function formatPayload(payload) {
+        if (payload == null) return "";
+        if (typeof payload === "string") return payload;
+        try {
+          return JSON.stringify(payload);
+        } catch (_) {
+          return String(payload);
+        }
+      }
+
+      function write(level, message, payload) {
+        const stamp = new Date().toLocaleTimeString("ja-JP", { hour12: false });
+        const line = `[${stamp}] ${level} ${message}${payload === undefined ? "" : ` ${formatPayload(payload)}`}`;
+        lines.push(line);
+        if (lines.length > maxLines) lines.shift();
+
+        if (!logBody) return;
+        logBody.textContent = lines.join("\n");
+        logBody.scrollTop = logBody.scrollHeight;
+      }
+
+      function init() {
+        if (!DEBUG_OVERLAY_ENABLED || panel) return;
+
+        const root = document.createElement("div");
+        root.id = "debug-overlay";
+        root.innerHTML = `
+          <button id="debug-overlay-toggle" type="button">LOG</button>
+          <div id="debug-overlay-panel" hidden>
+            <div id="debug-overlay-header">
+              <span>Debug Log</span>
+              <button id="debug-overlay-clear" type="button">CLEAR</button>
+            </div>
+            <pre id="debug-overlay-body"></pre>
+          </div>
+        `;
+        document.body.appendChild(root);
+
+        panel = root.querySelector("#debug-overlay-panel");
+        logBody = root.querySelector("#debug-overlay-body");
+        const toggle = root.querySelector("#debug-overlay-toggle");
+        const clear = root.querySelector("#debug-overlay-clear");
+
+        toggle.addEventListener("click", () => {
+          panel.hidden = !panel.hidden;
+        });
+
+        clear.addEventListener("click", () => {
+          lines.length = 0;
+          if (logBody) logBody.textContent = "";
+        });
+
+        window.addEventListener("error", (event) => {
+          write("ERR", event.message, { source: event.filename, line: event.lineno });
+        });
+
+        window.addEventListener("unhandledrejection", (event) => {
+          write("REJ", "Unhandled promise rejection", String(event.reason));
+        });
+
+        write("INFO", "Debug overlay ready", { ua: navigator.userAgent, href: window.location.href });
+      }
+
+      return { init, write };
+    })();
+
+    function debugTrace(message, payload) {
+      console.log(message, payload ?? "");
+      DebugOverlay.write("LOG", message, payload);
+    }
+
     function shuffle(arr) {
       for (let i = arr.length - 1; i > 0; i--) {
         const j = Math.floor(Math.random() * (i + 1));
@@ -696,14 +779,35 @@ STARTでゲーム開始`;
         });
 
         let startTriggered = false;
-        const start = async () => {
-          if (startTriggered) return;
+        const start = async (source = "unknown") => {
+          if (startTriggered) {
+            debugTrace("[StartScene] start ignored because already triggered", { source });
+            return;
+          }
           startTriggered = true;
+          debugTrace("[StartScene] start begin", {
+            source,
+            ship: currentShip,
+            mode: currentMode,
+            visibilityState: document.visibilityState
+          });
           await SFX.resume();
+          debugTrace("[StartScene] audio resume finished", { source });
           SFX.play("ui");
+          debugTrace("[StartScene] calling scene.start('game')", {
+            ship: currentShip,
+            mode: currentMode
+          });
           this.scene.start("game", { score: 0, lives: 3, ship: currentShip, mode: currentMode });
         };
-        btn.on("pointerdown", start);
+        btn.on("pointerdown", () => {
+          debugTrace("[StartScene] START button pointerdown event fired", {
+            ship: currentShip,
+            mode: currentMode,
+            startTriggered
+          });
+          void start("start-button");
+        });
 
         const containsPoint = (gameObject, x, y) => {
           if (!gameObject || gameObject.visible === false || gameObject.active === false) return false;
@@ -721,7 +825,14 @@ STARTでゲーム開始`;
 
           if (containsPoint(btn, x, y)) {
             btn.setStyle({ backgroundColor: "#0ea5e9", scale: 0.95 });
-            void start();
+            debugTrace("[StartScene] fallback pointerdown hit START", {
+              x,
+              y,
+              ship: currentShip,
+              mode: currentMode,
+              startTriggered
+            });
+            void start("fallback-hit-test");
             return;
           }
 
@@ -763,6 +874,10 @@ STARTでゲーム開始`;
           yoyo: true,
           repeat: -1
         });
+
+        this.events.once("shutdown", () => {
+          debugTrace("[StartScene] shutdown");
+        });
       }
     }
 
@@ -796,6 +911,7 @@ STARTでゲーム開始`;
       }
 
       init(data) {
+        debugTrace("[GameScene] init called", data);
         this.score = data?.score ?? 0;
         this.lives = data?.lives ?? 3;
         this.ship = data?.ship ?? currentShip;
@@ -816,6 +932,7 @@ STARTでゲーム開始`;
       }
 
       create() {
+        debugTrace("[GameScene] create called");
         const { width: w, height: h } = this.scale;
 
         this.cameras.main.setBackgroundColor("#05070f");
@@ -1723,6 +1840,7 @@ QUITでやめる`;
     async function bootstrapGame() {
       if (activeGame) return;
       syncAppHeight(true);
+      DebugOverlay.init();
       await waitForGameFonts(2500);
       activeGame = new Phaser.Game(config);
       ensureCanvasInputSurfaceStyle();
@@ -1739,8 +1857,6 @@ QUITでやめる`;
   </script>
 </body>
 </html>
-
-
 
 
 

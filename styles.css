@@ -263,3 +263,61 @@ html, body {
 ::-webkit-scrollbar-thumb:hover {
   background: var(--accent-blue);
 }
+
+#debug-overlay {
+  position: fixed;
+  right: 10px;
+  bottom: calc(env(safe-area-inset-bottom, 0px) + 10px);
+  z-index: 9999;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 8px;
+  pointer-events: none;
+}
+
+#debug-overlay-toggle,
+#debug-overlay-clear {
+  pointer-events: auto;
+  border: 1px solid rgba(125, 211, 252, 0.7);
+  background: rgba(11, 16, 36, 0.88);
+  color: #e2e8f0;
+  border-radius: 10px;
+  font-size: 12px;
+  font-weight: 600;
+  padding: 6px 10px;
+}
+
+#debug-overlay-panel {
+  pointer-events: auto;
+  width: min(360px, calc(100vw - 20px));
+  max-height: min(45vh, 320px);
+  border: 1px solid rgba(125, 211, 252, 0.55);
+  background: rgba(2, 6, 23, 0.92);
+  border-radius: 12px;
+  box-shadow: 0 10px 32px rgba(0, 0, 0, 0.45);
+  overflow: hidden;
+}
+
+#debug-overlay-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 10px;
+  color: #bae6fd;
+  font-size: 12px;
+  border-bottom: 1px solid rgba(125, 211, 252, 0.35);
+}
+
+#debug-overlay-body {
+  margin: 0;
+  padding: 8px 10px;
+  overflow: auto;
+  max-height: 260px;
+  white-space: pre-wrap;
+  word-break: break-word;
+  color: #e2e8f0;
+  font-size: 11px;
+  line-height: 1.35;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+}
