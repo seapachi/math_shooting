@@ -280,3 +280,23 @@ HUDと問題パネルの縦位置ルールを見直し、重なりを防止し�
   - `create()` 呼び出しログ
 
 この追加により、Chrome上で「押下イベントは来ているか」「音声resumeで止まっていないか」「`scene.start` が呼ばれているか」「GameScene側まで遷移しているか」を段階的に確認できます。
+
+### iPhone単体で確認できるデバッグログパネル
+iPhoneでMac接続なしでも調査できるよう、画面右下に小さな `LOG` ボタンを追加しました（iPhone/iPadで自動表示、または `?debug=1` でも表示）。
+
+- `LOG` を押すとデバッグパネルを開閉
+- `CLEAR` でログを消去
+- 既存のSTART遷移ログ（`StartScene` / `GameScene`）をパネル内にも表示
+- `window.onerror` と `unhandledrejection` もパネルに表示
+- 行数は最大80行で古いものから自動削除
+
+これにより、iPhone単体で「START押下 → 音声resume → scene.start呼び出し → GameScene到達」のどこで止まっているかを確認しやすくなります。
+
+### スマホだけで共有しやすいCOPY機能
+DebugOverlayに `COPY` ボタンを追加しました。iPhoneなどでログ確認後、そのまま共有しやすくするための機能です。
+
+- `COPY` でログ全体（最大80行）をクリップボードへコピー
+- クリップボードAPIが使えない場合は `prompt` を開いて手動コピー可能
+- コピー成功時はパネル内に `Log copied to clipboard` を追記
+
+これにより、Mac接続なしでも、端末だけでログ採取→共有（チャット貼り付け）がしやすくなります。
