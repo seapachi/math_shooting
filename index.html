@@ -634,6 +634,15 @@
             fill: true
           }
         }).setOrigin(0.5);
+
+        const TITLE_MAX_WIDTH_MARGIN = 20;
+        const TITLE_MIN_FONT_SIZE = 24;
+        const titleMaxWidth = Math.max(220, w - TITLE_MAX_WIDTH_MARGIN);
+        let fittedTitleFontSize = 36;
+        while (title.width > titleMaxWidth && fittedTitleFontSize > TITLE_MIN_FONT_SIZE) {
+          fittedTitleFontSize -= 1;
+          title.setFontSize(`${fittedTitleFontSize}px`);
+        }
         
         // Subtitle
         const subtitle = this.add.text(w/2, h*0.24, "計算して、正しいレーンを撃ち抜け", {
@@ -1860,19 +1869,23 @@ QUITでやめる`;
       });
 
       try {
-        const fontsReady = Promise.all([
-          document.fonts.load("700 60px Rajdhani"),
-          document.fonts.load("700 56px Rajdhani"),
-          document.fonts.load("700 52px Rajdhani"),
-          document.fonts.load("700 32px Rajdhani")
-        ]).then(() => "loaded");
+        const preloadFonts = [
+          "700 60px Rajdhani",
+          "700 56px Rajdhani",
+          "700 52px Rajdhani",
+          "700 32px Rajdhani",
+          "700 36px Orbitron",
+          "600 16px Space Grotesk",
+          "600 15px Space Grotesk"
+        ];
+        const fontsReady = Promise.all(preloadFonts.map(fontSpec => document.fonts.load(fontSpec))).then(() => "loaded");
 
         const result = await Promise.race([fontsReady, timer]);
         if (result === "timeout") {
-          console.warn(`[font] Rajdhani load timeout after ${timeoutMs}ms; continue bootstrap.`);
+          console.warn(`[font] Web font preload timeout after ${timeoutMs}ms; continue bootstrap.`);
         }
       } catch (err) {
-        console.warn("[font] Failed to load Rajdhani before bootstrap.", err);
+        console.warn("[font] Failed to preload web fonts before bootstrap.", err);
       }
     }
 
@@ -1896,7 +1909,6 @@ QUITでやめる`;
   </script>
 </body>
 </html>
-
 
 
 
