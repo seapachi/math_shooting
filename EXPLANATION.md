@@ -282,7 +282,7 @@ HUDと問題パネルの縦位置ルールを見直し、重なりを防止し�
 この追加により、Chrome上で「押下イベントは来ているか」「音声resumeで止まっていないか」「`scene.start` が呼ばれているか」「GameScene側まで遷移しているか」を段階的に確認できます。
 
 ### iPhone単体で確認できるデバッグログパネル
-iPhoneでMac接続なしでも調査できるよう、画面右下に小さな `LOG` ボタンを追加しました（iPhone/iPadで自動表示、または `?debug=1` でも表示）。
+iPhoneでMac接続なしでも調査できるよう、画面右下に小さな `LOG` ボタンを追加しました（`?debug=1` を付けると表示）。
 
 - `LOG` を押すとデバッグパネルを開閉
 - `CLEAR` でログを消去
@@ -300,3 +300,14 @@ DebugOverlayに `COPY` ボタンを追加しました。iPhoneなどでログ確
 - コピー成功時はパネル内に `Log copied to clipboard` を追記
 
 これにより、Mac接続なしでも、端末だけでログ採取→共有（チャット貼り付け）がしやすくなります。
+
+
+### START遷移時の音声resume待機タイムアウト
+START押下後に `SFX.resume()` が解決されず、`scene.start("game")` へ進まないケースに対策を入れました。
+
+- `StartScene` の `start()` に `RESUME_TIMEOUT_MS = 350` を追加
+- `SFX.resume()` は `Promise.race()` で `350ms` まで待機
+- 期限超過（timeout）や失敗（rejected）でも、ログを出してゲーム開始処理を継続
+- `scene.start("game")` は音声初期化結果に関わらず呼ばれる
+
+この変更で、音声初期化が不安定な環境でも、START後の画面遷移が止まりにくくなります。

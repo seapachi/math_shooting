@@ -27,8 +27,7 @@
 
     const DEBUG_OVERLAY_ENABLED = (() => {
       const params = new URLSearchParams(window.location.search);
-      if (params.get("debug") === "1") return true;
-      return /iPhone|iPad|iPod/i.test(navigator.userAgent);
+      return params.get("debug") === "1";
     })();
 
     const DebugOverlay = (() => {
@@ -796,6 +795,8 @@ STARTでゲーム開始`;
         });
 
         let startTriggered = false;
+        const RESUME_TIMEOUT_MS = 350;
+
         const start = async (source = "unknown") => {
           if (startTriggered) {
             debugTrace("[StartScene] start ignored because already triggered", { source });
@@ -808,8 +809,29 @@ STARTでゲーム開始`;
             mode: currentMode,
             visibilityState: document.visibilityState
           });
-          await SFX.resume();
-          debugTrace("[StartScene] audio resume finished", { source });
+          let resumeState = "resolved";
+          try {
+            const resumeTimeout = new Promise((resolve) => {
+              window.setTimeout(() => resolve("timeout"), RESUME_TIMEOUT_MS);
+            });
+            resumeState = await Promise.race([
+              SFX.resume().then(() => "resolved").catch(() => "rejected"),
+              resumeTimeout
+            ]);
+          } catch (_) {
+            resumeState = "rejected";
+          }
+
+          if (resumeState === "timeout") {
+            debugTrace("[StartScene] audio resume timeout; continue start", {
+              source,
+              timeoutMs: RESUME_TIMEOUT_MS
+            });
+          } else if (resumeState === "rejected") {
+            debugTrace("[StartScene] audio resume rejected; continue start", { source });
+          } else {
+            debugTrace("[StartScene] audio resume finished", { source });
+          }
           SFX.play("ui");
           debugTrace("[StartScene] calling scene.start('game')", {
             ship: currentShip,
