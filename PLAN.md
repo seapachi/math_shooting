@@ -38,6 +38,7 @@
 | T32 | スマホ共有向けログコピー機能追加 | 完了 | `index.html`, `styles.css`, `EXPLANATION.md`, `PLAN.md` | DebugOverlayにCOPYボタンを追加し、ログをクリップボード/プロンプト経由で共有可能にした |
 | T33 | START遷移のaudio resume待機にタイムアウト導入 | 完了 | `index.html`, `EXPLANATION.md`, `PLAN.md` | ブラウザ分岐を除去し、`SFX.resume()`待機を350msで打ち切って遷移継続する |
 | T34 | iPhone Chromeでタイトル欠けする問題の対策 | 完了 | `index.html`, `EXPLANATION.md`, `PLAN.md` | 起動前フォント待機にタイトル用フォントを追加し、描画時の字幅ズレを抑制する |
+| T35 | タイトル文字の横幅超過による欠け対策 | 完了 | `index.html`, `EXPLANATION.md`, `PLAN.md` | StartSceneタイトルを画面幅に収める自動縮小を追加し、左右クリップを防止する |
 
 ## 運用メモ
 - 状態は `未着手 / 進行中 / 完了 / 保留` を使う。

@@ -634,6 +634,15 @@
             fill: true
           }
         }).setOrigin(0.5);
+
+        const TITLE_MAX_WIDTH_MARGIN = 20;
+        const TITLE_MIN_FONT_SIZE = 24;
+        const titleMaxWidth = Math.max(220, w - TITLE_MAX_WIDTH_MARGIN);
+        let fittedTitleFontSize = 36;
+        while (title.width > titleMaxWidth && fittedTitleFontSize > TITLE_MIN_FONT_SIZE) {
+          fittedTitleFontSize -= 1;
+          title.setFontSize(`${fittedTitleFontSize}px`);
+        }
         
         // Subtitle
         const subtitle = this.add.text(w/2, h*0.24, "計算して、正しいレーンを撃ち抜け", {
