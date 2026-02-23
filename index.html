@@ -696,14 +696,35 @@ STARTでゲーム開始`;
         });
 
         let startTriggered = false;
-        const start = async () => {
-          if (startTriggered) return;
+        const start = async (source = "unknown") => {
+          if (startTriggered) {
+            console.log("[StartScene] start ignored because already triggered", { source });
+            return;
+          }
           startTriggered = true;
+          console.log("[StartScene] start begin", {
+            source,
+            ship: currentShip,
+            mode: currentMode,
+            visibilityState: document.visibilityState
+          });
           await SFX.resume();
+          console.log("[StartScene] audio resume finished", { source });
           SFX.play("ui");
+          console.log("[StartScene] calling scene.start('game')", {
+            ship: currentShip,
+            mode: currentMode
+          });
           this.scene.start("game", { score: 0, lives: 3, ship: currentShip, mode: currentMode });
         };
-        btn.on("pointerdown", start);
+        btn.on("pointerdown", () => {
+          console.log("[StartScene] START button pointerdown event fired", {
+            ship: currentShip,
+            mode: currentMode,
+            startTriggered
+          });
+          void start("start-button");
+        });
 
         const containsPoint = (gameObject, x, y) => {
           if (!gameObject || gameObject.visible === false || gameObject.active === false) return false;
@@ -721,7 +742,14 @@ STARTでゲーム開始`;
 
           if (containsPoint(btn, x, y)) {
             btn.setStyle({ backgroundColor: "#0ea5e9", scale: 0.95 });
-            void start();
+            console.log("[StartScene] fallback pointerdown hit START", {
+              x,
+              y,
+              ship: currentShip,
+              mode: currentMode,
+              startTriggered
+            });
+            void start("fallback-hit-test");
             return;
           }
 
@@ -763,6 +791,10 @@ STARTでゲーム開始`;
           yoyo: true,
           repeat: -1
         });
+
+        this.events.once("shutdown", () => {
+          console.log("[StartScene] shutdown");
+        });
       }
     }
 
@@ -796,6 +828,7 @@ STARTでゲーム開始`;
       }
 
       init(data) {
+        console.log("[GameScene] init called", data);
         this.score = data?.score ?? 0;
         this.lives = data?.lives ?? 3;
         this.ship = data?.ship ?? currentShip;
@@ -816,6 +849,7 @@ STARTでゲーム開始`;
       }
 
       create() {
+        console.log("[GameScene] create called");
         const { width: w, height: h } = this.scale;
 
         this.cameras.main.setBackgroundColor("#05070f");
@@ -1739,8 +1773,6 @@ QUITでやめる`;
   </script>
 </body>
 </html>
-
-
 
 
 
