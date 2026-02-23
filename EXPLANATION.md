@@ -115,6 +115,21 @@ iPhone/Android の Chrome は、アドレスバーやツールバーの表示状
 
 この変更は入力の取りこぼし防止とレイアウト同期の安定化が目的で、得点・ライフ・操作ルール自体（タップ移動/スワイプ移動/ダブルタップ発射）は変更していません。
 
+### タイトル画面のみ無反応対策（UA分岐なし）
+実機で「ゲーム画面は反応するが、タイトル画面だけタップが効かない」症状に対して、`StartScene` の入力処理にフォールバックを追加しています。
+
+- 既存の `setInteractive + pointerdown` はそのまま維持
+- `this.input.on("pointerdown", (pointer, currentlyOver) => { ... })` を追加
+- `currentlyOver` に対象があるときは既存のヒット判定を優先して何もしない
+- `currentlyOver` が空のときだけ、`GameObject.getBounds()` で座標判定して次を実行
+  - `START`
+  - `SHIP` 切替
+  - `足し算 / 引き算 / 掛け算` 切替
+- `START` は `startTriggered` フラグで多重起動を防止
+
+この対応は **ブラウザUA判定を使わず** に、タイトル画面入力の取りこぼしを補うことが目的です。  
+ゲームルール（得点・ライフ・速度・出題）には変更を加えていません。
+
 
 ### HUDパネル（SCORE / SPEED / LIFE）調整
 `GameScene.create()` の情報パネルを、参照SVGに寄せたサイズと配色に更新しています。

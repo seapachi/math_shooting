@@ -559,12 +559,18 @@
         const updateShipLabel = () => {
           shipLabel.setText(`SHIP: ${currentShip.toUpperCase()} [TAP TO SWITCH]`);
         };
-        updateShipLabel();
-        shipLabel.on("pointerdown", () => {
+        let lastShipToggleAt = 0;
+        const SHIP_TOGGLE_GUARD_MS = 80;
+        const toggleShip = () => {
+          const now = performance.now();
+          if ((now - lastShipToggleAt) <= SHIP_TOGGLE_GUARD_MS) return;
+          lastShipToggleAt = now;
           currentShip = currentShip === "sharp" ? "flare" : "sharp";
           SFX.play("ui");
           updateShipLabel();
-        });
+        };
+        updateShipLabel();
+        shipLabel.on("pointerdown", toggleShip);
 
         // Mode segmented control
         const modeWrap = this.add.container(w/2, h*0.36);
@@ -689,12 +695,53 @@ STARTでゲーム開始`;
           btn.setStyle({ backgroundColor: "#0ea5e9", scale: 0.95 });
         });
 
+        let startTriggered = false;
         const start = async () => {
+          if (startTriggered) return;
+          startTriggered = true;
           await SFX.resume();
           SFX.play("ui");
           this.scene.start("game", { score: 0, lives: 3, ship: currentShip, mode: currentMode });
         };
         btn.on("pointerdown", start);
+
+        const containsPoint = (gameObject, x, y) => {
+          if (!gameObject || gameObject.visible === false || gameObject.active === false) return false;
+          if (typeof gameObject.getBounds !== "function") return false;
+          const bounds = gameObject.getBounds();
+          return Phaser.Geom.Rectangle.Contains(bounds, x, y);
+        };
+
+        this.input.on("pointerdown", (pointer, currentlyOver) => {
+          // Prefer Phaser's normal interactive hit test when available.
+          if (Array.isArray(currentlyOver) && currentlyOver.length > 0) return;
+
+          const x = pointer.x;
+          const y = pointer.y;
+
+          if (containsPoint(btn, x, y)) {
+            btn.setStyle({ backgroundColor: "#0ea5e9", scale: 0.95 });
+            void start();
+            return;
+          }
+
+          if (containsPoint(shipLabel, x, y)) {
+            toggleShip();
+            return;
+          }
+
+          if (containsPoint(addBtn, x, y) || containsPoint(addText, x, y)) {
+            setMode("add");
+            return;
+          }
+          if (containsPoint(subBtn, x, y) || containsPoint(subText, x, y)) {
+            setMode("sub");
+            return;
+          }
+          if (containsPoint(mulBtn, x, y) || containsPoint(mulText, x, y)) {
+            setMode("mul");
+          }
+        });
         
         // Floating animation for title
         this.tweens.add({
