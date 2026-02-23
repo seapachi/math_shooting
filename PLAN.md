@@ -33,6 +33,7 @@
 | T27 | スマホChromeのタップ無反応修正 | 完了 | `index.html`, `styles.css`, `EXPLANATION.md`, `PLAN.md` | viewport再計算の過剰実行を抑制し、canvasのタッチ入力設定を強化 |
 | T28 | 設定ファイル追加と速度・出題範囲の設定化 | 完了 | `game-settings.js`, `index.html`, `AGENTS.md`, `EXPLANATION.md`, `PLAN.md` | 速度上昇幅、連続正解条件、出題範囲を設定ファイルで変更可能にする |
 | T29 | タイトル画面のみ無反応の入力フォールバック修正（UA分岐なし） | 完了 | `index.html`, `EXPLANATION.md`, `PLAN.md` | StartSceneで`currentlyOver`優先 + 座標判定フォールバックを追加し、ゲーム画面ロジックは維持 |
+| T30 | START押下後の遷移調査ログ追加（Chrome不具合切り分け） | 完了 | `index.html`, `EXPLANATION.md`, `PLAN.md` | START押下からscene.start到達までをコンソール出力し、詰まり箇所を可視化 |
 
 ## 運用メモ
 - 状態は `未着手 / 進行中 / 完了 / 保留` を使う。
